@@ -1,41 +1,46 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-
-
-    public float gravityForce = 25f;
-    [Range(1f, 10f)]
-    public float movementSpeed = 5f;
+    public float moveSpeed = 6f;
+    public float gravity = 20f;
     public float jumpForce = 8f;
+    public float wallRunGravity = 2f;
+    public float wallRunSpeed = 8f;
+    public float wallJumpForce = 10f;
+    public float wallCheckDistance = 1f;
 
+    private CharacterController controller;
+    private Vector2 input;
     private float verticalVelocity;
     private bool isJumping = false;
 
-    public Vector2 movementInput;
+    private bool isWallRunning = false;
+    private bool wallLeft, wallRight;
 
-    private CharacterController characterController;
+    public Transform orientation;
+    public LayerMask wallLayer;
 
-    private void Awake()
+    private Vector3 wallNormal;
+    private Vector3 wallJumpHorizontalVelocity = Vector3.zero;
+
+    void Awake()
     {
-        characterController = GetComponent<CharacterController>();
+        controller = GetComponent<CharacterController>();
     }
 
     void Update()
     {
-        float movementX = movementInput.x * movementSpeed;
-        float movementZ = movementInput.y * movementSpeed;
+        CheckForWalls();
 
-        Vector3 horizontalMove = transform.right * movementX + transform.forward * movementZ;
-        Vector3 move = Vector3.zero;
+        Vector3 move = orientation.forward * input.y + orientation.right * input.x;
+        move *= moveSpeed;
 
-        if (characterController.isGrounded)
+        if (controller.isGrounded)
         {
-            if (verticalVelocity < 0f)
-                verticalVelocity = -1f;
-
+            verticalVelocity = -1f;
+            wallJumpHorizontalVelocity = Vector3.zero;
             if (isJumping)
             {
                 verticalVelocity = jumpForce;
@@ -44,23 +49,71 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            verticalVelocity -= gravityForce * Time.deltaTime;
+            verticalVelocity -= (isWallRunning ? wallRunGravity : gravity) * Time.deltaTime;
         }
 
-        move = horizontalMove + Vector3.up * verticalVelocity;
-        characterController.Move(move * Time.deltaTime);
-    }
-
-    public void OnMove(InputAction.CallbackContext context)
-    {
-        movementInput = context.ReadValue<Vector2>();
-    }
-
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        if (context.started && characterController.isGrounded)
+        if (wallJumpHorizontalVelocity.magnitude > 0.1f)
         {
-            isJumping = true;
+            move += wallJumpHorizontalVelocity;
+            wallJumpHorizontalVelocity = Vector3.Lerp(wallJumpHorizontalVelocity, Vector3.zero, 10f * Time.deltaTime);
+        }
+
+        isWallRunning = (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
+
+        if (isWallRunning)
+        {
+            Vector3 wallRunDirection = Vector3.Cross(wallNormal, Vector3.up);
+            if (Mathf.Sign(input.y) * Vector3.Dot(wallRunDirection, orientation.forward) < 0)
+                wallRunDirection = -wallRunDirection;
+
+            Vector3 wallRunMove = wallRunDirection * wallRunSpeed;
+            wallRunMove.y = verticalVelocity;
+
+            Vector3 finalMove = wallRunMove + move * 0.5f;
+
+            controller.Move(finalMove * Time.deltaTime);
+        }
+        else
+        {
+            move.y = verticalVelocity;
+            controller.Move(move * Time.deltaTime);
+        }
+    }
+
+
+    void CheckForWalls()
+    {
+        RaycastHit hit;
+
+        wallRight = Physics.Raycast(transform.position, orientation.right, out hit, wallCheckDistance, wallLayer);
+        if (wallRight) wallNormal = hit.normal;
+
+        wallLeft = Physics.Raycast(transform.position, -orientation.right, out hit, wallCheckDistance, wallLayer);
+        if (wallLeft) wallNormal = hit.normal;
+    }
+
+    public void OnMove(InputAction.CallbackContext ctx)
+    {
+        input = ctx.ReadValue<Vector2>();
+    }
+
+    public void OnJump(InputAction.CallbackContext ctx)
+    {
+        if (ctx.started)
+        {
+            if (controller.isGrounded)
+            {
+                isJumping = true;
+            }
+            else if (isWallRunning)
+            {
+                verticalVelocity = jumpForce;
+
+                Vector3 wallJumpDir = (wallNormal + Vector3.up).normalized;
+                wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
+
+                isWallRunning = false;
+            }
         }
     }
 }
