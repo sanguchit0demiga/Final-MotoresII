@@ -191,6 +191,6 @@ public class PlayerController : MonoBehaviour
         }
 
         
-        Destroy(bullet, 6f);
+        Destroy(bullet, 4f);
     }
 }
