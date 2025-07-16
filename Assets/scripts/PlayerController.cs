@@ -25,9 +25,16 @@ public class PlayerController : MonoBehaviour
     private Vector3 wallNormal;
     private Vector3 wallJumpHorizontalVelocity = Vector3.zero;
 
-    private float maxhHealth =100f;
+    private float maxhHealth = 100f;
     public float currentHealth;
     private Vector3 posicionInicial;
+
+    public GameObject bulletPrefab;
+    public Transform firePoint;
+    public float bulletForce = 20f;
+    public float fireRate = 0.2f;
+    private float nextFireTime = 0f;
+
 
     void Awake()
     {
@@ -124,6 +131,12 @@ public class PlayerController : MonoBehaviour
                 wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
 
                 isWallRunning = false;
+                if (isJumping)
+                {
+                    Debug.Log("SALTANDO");
+                    verticalVelocity = jumpForce;
+                    isJumping = false;
+                }
             }
         }
     }
@@ -137,10 +150,10 @@ public class PlayerController : MonoBehaviour
         {
 
             Die();
-            
+
         }
     }
-     public void Die()
+    public void Die()
     {
 
         controller.enabled = false;
@@ -150,5 +163,28 @@ public class PlayerController : MonoBehaviour
 
         controller.enabled = true;
 
+    }
+    public void OnFire(InputAction.CallbackContext ctx)
+    {
+        if (ctx.performed && Time.time >= nextFireTime)
+        {
+            Shoot();
+            nextFireTime = Time.time + fireRate;
+        }
+    }
+
+    private void Shoot()
+    {
+
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.AddForce(firePoint.forward * bulletForce, ForceMode.Impulse);
+        }
+
+        
+        Destroy(bullet, 6f);
     }
 }
