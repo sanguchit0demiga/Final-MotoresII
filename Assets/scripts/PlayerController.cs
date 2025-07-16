@@ -25,6 +25,10 @@ public class PlayerController : MonoBehaviour
     private Vector3 wallNormal;
     private Vector3 wallJumpHorizontalVelocity = Vector3.zero;
 
+    private float maxhHealth =100f;
+    public float currentHealth;
+    private Vector3 posicionInicial;
+
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -33,6 +37,9 @@ public class PlayerController : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        currentHealth = maxhHealth;
+        posicionInicial = transform.position;
     }
     void Update()
     {
@@ -119,5 +126,29 @@ public class PlayerController : MonoBehaviour
                 isWallRunning = false;
             }
         }
+    }
+
+    public void TakeDamage(float damageAmount)
+    {
+        currentHealth -= damageAmount;
+
+        Debug.Log("vida actual: " + currentHealth);
+        if (currentHealth <= 0)
+        {
+
+            Die();
+            
+        }
+    }
+     public void Die()
+    {
+
+        controller.enabled = false;
+
+        transform.position = posicionInicial;
+        currentHealth = maxhHealth;
+
+        controller.enabled = true;
+
     }
 }
