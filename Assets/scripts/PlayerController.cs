@@ -36,7 +36,7 @@ public class PlayerController : MonoBehaviour
     private float nextFireTime = 0f;
     public ParticleSystem muzzleFlash;
 
-
+    public CamSwitch camSwitcher;
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -158,6 +158,10 @@ public class PlayerController : MonoBehaviour
     {
 
         controller.enabled = false;
+        if (camSwitcher != null)
+        {
+            camSwitcher.ResetToFPS();
+        }
 
         transform.position = posicionInicial;
         currentHealth = maxhHealth;
@@ -192,5 +196,15 @@ public class PlayerController : MonoBehaviour
 
         
         Destroy(bullet, 4f);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("BulletEnemy"))
+        {
+            TakeDamage(25f); 
+            Destroy(collision.gameObject); 
+        }
+       
     }
 }

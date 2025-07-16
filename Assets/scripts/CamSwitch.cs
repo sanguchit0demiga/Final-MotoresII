@@ -22,7 +22,7 @@ public class CamSwitch : MonoBehaviour
         {
             isTopDown = !isTopDown;
 
-            fpsCamera.SetActive(!false);     
+            fpsCamera.SetActive(true);     
             topDownCamObject.SetActive(true);
 
             foreach (var enemy in enemies)
@@ -30,5 +30,11 @@ public class CamSwitch : MonoBehaviour
                 enemy.StartFollowing();
             }
         }
+    }
+    public void ResetToFPS()
+    {
+        isTopDown = false;
+        fpsCamera.SetActive(true);
+        topDownCamObject.SetActive(false);
     }
 }
