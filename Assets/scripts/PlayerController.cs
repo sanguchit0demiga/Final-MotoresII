@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
     public float bulletForce = 20f;
     public float fireRate = 0.2f;
     private float nextFireTime = 0f;
+    public ParticleSystem muzzleFlash;
 
 
     void Awake()
@@ -175,6 +176,11 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot()
     {
+        if (muzzleFlash != null)
+        {
+            Debug.Log("Intento de reproducir partículas");
+            muzzleFlash.Play();
+        }
 
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
 
