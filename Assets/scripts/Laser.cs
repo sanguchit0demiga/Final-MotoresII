@@ -8,6 +8,7 @@ public class Laser : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            Debug.Log("Player hit by laser!");
             PlayerController player = other.GetComponent<PlayerController>();
             if (player != null)
             {
