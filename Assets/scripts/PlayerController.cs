@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -37,6 +38,19 @@ public class PlayerController : MonoBehaviour
     public ParticleSystem muzzleFlash;
 
     public CamSwitch camSwitcher;
+
+    public int ammo = 25;
+    public int maxAmmo = 25;
+    public Text ammoDisplay;
+
+    public AudioSource gunShotAudio;
+
+    public AudioSource reloadAudio;
+    public AudioSource footstepAudio;
+
+    public AudioSource jumpAudio;
+   
+
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -48,9 +62,11 @@ public class PlayerController : MonoBehaviour
 
         currentHealth = maxhHealth;
         posicionInicial = transform.position;
+        UpdateAmmoDisplay();
     }
     void Update()
     {
+
         CheckForWalls();
 
         Vector3 move = orientation.forward * input.y + orientation.right * input.x;
@@ -97,6 +113,23 @@ public class PlayerController : MonoBehaviour
             move.y = verticalVelocity;
             controller.Move(move * Time.deltaTime);
         }
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            Reload();
+        }
+
+        bool isMoving = input.magnitude > 0.1f;
+        bool isGrounded = controller.isGrounded;
+
+        if (isMoving && isGrounded && !footstepAudio.isPlaying)
+        {
+            footstepAudio.Play();
+        }
+        else if ((!isMoving || !isGrounded) && footstepAudio.isPlaying)
+        {
+            footstepAudio.Stop();
+        }
+
     }
 
 
@@ -123,6 +156,8 @@ public class PlayerController : MonoBehaviour
             if (controller.isGrounded)
             {
                 isJumping = true;
+                if (jumpAudio != null)
+                    jumpAudio.Play();
             }
             else if (isWallRunning)
             {
@@ -132,9 +167,11 @@ public class PlayerController : MonoBehaviour
                 wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
 
                 isWallRunning = false;
+                if (jumpAudio != null)
+                    jumpAudio.Play(); 
                 if (isJumping)
                 {
-                    Debug.Log("SALTANDO");
+                    
                     verticalVelocity = jumpForce;
                     isJumping = false;
                 }
@@ -180,10 +217,22 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot()
     {
+
+        Debug.Log("Ammo antes de disparar: " + ammo);
+
+        if (ammo <= 0)
+        {
+            Debug.Log("Sin munición");
+            return;
+        }
         if (muzzleFlash != null)
         {
-            Debug.Log("Intento de reproducir partículas");
+         
             muzzleFlash.Play();
+        }
+        if (gunShotAudio != null)
+        {
+            gunShotAudio.Play();
         }
 
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
@@ -196,6 +245,8 @@ public class PlayerController : MonoBehaviour
 
         
         Destroy(bullet, 4f);
+        ammo--;
+        UpdateAmmoDisplay();
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -206,5 +257,23 @@ public class PlayerController : MonoBehaviour
             Destroy(collision.gameObject); 
         }
        
+    }
+    private void UpdateAmmoDisplay()
+    {
+        if (ammoDisplay != null)
+        {
+            ammoDisplay.text =  ammo.ToString() ;
+        }
+    }
+    private void Reload()
+    {
+        if (reloadAudio != null)
+        {
+            reloadAudio.Play();
+        }
+
+        ammo = maxAmmo;
+        UpdateAmmoDisplay();
+        Debug.Log("Recargado");
     }
 }
