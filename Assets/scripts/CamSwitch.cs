@@ -9,6 +9,7 @@ public class CamSwitch : MonoBehaviour
     public Navmesh[] enemies;
 
     private bool isTopDown = false;
+    public AudioClip newMusic;
 
     private void Start()
     {
@@ -20,6 +21,10 @@ public class CamSwitch : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            if (MusicController.instance != null)
+            {
+                MusicController.instance.PlayMusic(newMusic);
+            }
             isTopDown = !isTopDown;
 
             fpsCamera.SetActive(true);     

@@ -121,15 +121,7 @@ public class PlayerController : MonoBehaviour
         bool isMoving = input.magnitude > 0.1f;
         bool isGrounded = controller.isGrounded;
 
-        if (isMoving && isGrounded && !footstepAudio.isPlaying)
-        {
-            footstepAudio.Play();
-        }
-        else if ((!isMoving || !isGrounded) && footstepAudio.isPlaying)
-        {
-            footstepAudio.Stop();
-        }
-
+      
     }
 
 

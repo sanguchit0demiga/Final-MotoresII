@@ -39,5 +39,14 @@ public class MusicController : MonoBehaviour
             audioSource.Stop();
         }
     }
+    public void PlayMusic(AudioClip clip, bool loop = true)
+    {
+        if (clip == null || audioSource == null)
+            return;
+
+        audioSource.clip = clip;
+        audioSource.loop = loop;
+        audioSource.Play();
+    }
 }
 
