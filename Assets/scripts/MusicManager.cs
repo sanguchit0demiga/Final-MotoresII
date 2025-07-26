@@ -10,26 +10,27 @@ public class MusicManagerScript : MonoBehaviour
     private AudioSource musicAudioSource;
 
     [Header("Configuración de Música")]
-    public AudioMixerGroup musicMixerGroup;
-    public AudioClip menuMusicClip;
-    public AudioClip level1MusicClip;
+    public AudioMixerGroup musicMixerGroup; // Asigna tu grupo 'Music' aquí en el Inspector
+    public AudioClip menuMusicClip;         // Asigna el clip de música del menú aquí
+    public AudioClip level1MusicClip;       // Asigna el clip de música del Nivel 1 aquí
 
     void Awake()
     {
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // Esto hace que persista
 
             musicAudioSource = GetComponent<AudioSource>();
             if (musicAudioSource == null)
             {
                 musicAudioSource = gameObject.AddComponent<AudioSource>();
             }
-            musicAudioSource.outputAudioMixerGroup = musicMixerGroup;
-            musicAudioSource.loop = true;
-            musicAudioSource.playOnAwake = false;
+            musicAudioSource.outputAudioMixerGroup = musicMixerGroup; // Conecta al mixer
+            musicAudioSource.loop = true; // La música suele repetirse
+            musicAudioSource.playOnAwake = false; // Lo gestionaremos manualmente
 
+            // Reproducir la música inicial (del menú) si no está sonando ya.
             if (!musicAudioSource.isPlaying && menuMusicClip != null)
             {
                 musicAudioSource.clip = menuMusicClip;
@@ -39,7 +40,7 @@ public class MusicManagerScript : MonoBehaviour
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Si ya existe otra instancia, destrúyete
         }
     }
 
@@ -77,7 +78,6 @@ public class MusicManagerScript : MonoBehaviour
                 Debug.LogWarning("MusicManager: No se ha asignado un AudioClip para 'Level1MusicClip' en el Inspector.");
             }
         }
-        // ¡CAMBIO AQUÍ! Agregando "Controls"
         else if (scene.name == "Menu" || scene.name == "Options" || scene.name == "Audio" || scene.name == "SelectLevel" || scene.name == "Controls")
         {
             nextClipToPlay = menuMusicClip;
@@ -91,33 +91,51 @@ public class MusicManagerScript : MonoBehaviour
             Debug.Log($"MusicManager: La escena '{scene.name}' no tiene música específica. Deteniendo la música actual.");
             if (musicAudioSource.isPlaying)
             {
-                musicAudioSource.Stop();
+                musicAudioSource.Stop(); // Detener si no hay música específica para esta escena
             }
             return;
         }
 
-        if (nextClipToPlay != null && musicAudioSource.clip != nextClipToPlay)
+        // Si el nuevo clip es diferente al actual, o si no hay nada sonando, cámbialo y reprodúcelo
+        if (nextClipToPlay != null)
         {
-            musicAudioSource.Stop();
-            musicAudioSource.clip = nextClipToPlay;
-            musicAudioSource.Play();
-            Debug.Log($"MusicManager: Cambiando música a: {nextClipToPlay.name}.");
+            if (musicAudioSource.clip != nextClipToPlay)
+            {
+                musicAudioSource.Stop();
+                musicAudioSource.clip = nextClipToPlay;
+                musicAudioSource.Play();
+                Debug.Log($"MusicManager: Cambiando música a: {nextClipToPlay.name}.");
+            }
+            else if (!musicAudioSource.isPlaying)
+            {
+                // Si el mismo clip debe sonar pero no está sonando, iniciar
+                musicAudioSource.Play();
+                Debug.Log($"MusicManager: Continuando reproducción de música: {nextClipToPlay.name}.");
+            }
         }
-        else if (nextClipToPlay != null && !musicAudioSource.isPlaying)
+        else if (musicAudioSource.isPlaying) // Si nextClipToPlay es nulo pero algo está sonando
         {
-            musicAudioSource.Play();
-            Debug.Log($"MusicManager: Continuando reproducción de música: {nextClipToPlay.name}.");
+            musicAudioSource.Stop(); // Detener la música
+            Debug.Log("MusicManager: Deteniendo música porque no hay clip para esta escena.");
         }
     }
 
-    public void PlaySpecificMusic(AudioClip newClip)
+    // --- NUEVO: Métodos para controlar la música de forma explícita ---
+    public void PauseMusic()
     {
-        if (musicAudioSource != null && newClip != null && musicAudioSource.clip != newClip)
+        if (musicAudioSource != null && musicAudioSource.isPlaying)
         {
-            musicAudioSource.Stop();
-            musicAudioSource.clip = newClip;
-            musicAudioSource.Play();
-            Debug.Log($"MusicManager: Reproduciendo música específica: {newClip.name}.");
+            musicAudioSource.Pause();
+            Debug.Log("MusicManager: Música pausada.");
+        }
+    }
+
+    public void UnpauseMusic()
+    {
+        if (musicAudioSource != null && !musicAudioSource.isPlaying)
+        {
+            musicAudioSource.UnPause();
+            Debug.Log("MusicManager: Música reanudada.");
         }
     }
 
@@ -127,6 +145,21 @@ public class MusicManagerScript : MonoBehaviour
         {
             musicAudioSource.Stop();
             Debug.Log("MusicManager: Música detenida.");
+        }
+    }
+
+    public void SetMusicClipAndPlay(AudioClip newClip)
+    {
+        if (musicAudioSource != null && newClip != null && musicAudioSource.clip != newClip)
+        {
+            musicAudioSource.clip = newClip;
+            musicAudioSource.Play();
+            Debug.Log($"MusicManager: Estableciendo y reproduciendo nuevo clip: {newClip.name}");
+        }
+        else if (musicAudioSource != null && newClip != null && musicAudioSource.clip == newClip && !musicAudioSource.isPlaying)
+        {
+            musicAudioSource.Play(); // Si ya es el mismo clip pero está pausado/detenido
+            Debug.Log($"MusicManager: Reanudando reproducción de clip existente: {newClip.name}");
         }
     }
 }

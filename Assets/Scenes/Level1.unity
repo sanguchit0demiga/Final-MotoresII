@@ -25295,11 +25295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 927140e388bfc8a4b8e0e469d5a5b1d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pausePanel: {fileID: 950917440}
-  playerController: {fileID: 312167934}
-  pauseMasterSlider: {fileID: 861049750}
-  pauseMusicSlider: {fileID: 2045963323}
-  pauseSFXSlider: {fileID: 1725379796}
+  pauseMenuUI: {fileID: 950917440}
 --- !u!4 &553014438
 Transform:
   m_ObjectHideFlags: 0
@@ -39744,7 +39740,7 @@ GameObject:
   - component: {fileID: 861049749}
   - component: {fileID: 861049750}
   m_Layer: 5
-  m_Name: SliderMaster
+  m_Name: MasterSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -42877,7 +42873,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 553014437}
         m_TargetAssemblyTypeName: PauseManager, Assembly-CSharp
-        m_MethodName: GoToMenu
+        m_MethodName: LoadMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -77429,7 +77425,7 @@ GameObject:
   - component: {fileID: 1725379795}
   - component: {fileID: 1725379796}
   m_Layer: 5
-  m_Name: SliderSFX
+  m_Name: SFXSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92349,7 +92345,7 @@ GameObject:
   - component: {fileID: 2045963322}
   - component: {fileID: 2045963323}
   m_Layer: 5
-  m_Name: SliderMusic
+  m_Name: MusicSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
