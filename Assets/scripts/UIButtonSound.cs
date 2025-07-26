@@ -5,13 +5,13 @@ public class UIButtonSound : MonoBehaviour, IPointerEnterHandler, IPointerClickH
 {
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (SFXManager.instance != null)
-            SFXManager.instance.PlayHover();
+        if (AudioManager.instance != null)
+            AudioManager.instance.PlayHoverSound();
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (SFXManager.instance != null)
-            SFXManager.instance.PlayClick();
+        if (AudioManager.instance != null)
+            AudioManager.instance.PlayClickSound();
     }
 }

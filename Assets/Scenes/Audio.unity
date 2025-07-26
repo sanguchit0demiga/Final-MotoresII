@@ -1112,7 +1112,7 @@ GameObject:
   - component: {fileID: 1196854525}
   - component: {fileID: 1196854524}
   m_Layer: 5
-  m_Name: VFXSlider
+  m_Name: SFXSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1202,7 +1202,7 @@ GameObject:
   - component: {fileID: 1388754019}
   - component: {fileID: 1388754020}
   m_Layer: 5
-  m_Name: 'MusicSlider '
+  m_Name: MusicSlider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1280,7 +1280,19 @@ MonoBehaviour:
   m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+        m_MethodName: SetMusicVolume
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1424809728
 GameObject:
   m_ObjectHideFlags: 0
@@ -1941,8 +1953,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: AudioManager, Assembly-CSharp
+      - m_Target: {fileID: 2017817703}
+        m_TargetAssemblyTypeName: ControlsManager, Assembly-CSharp
         m_MethodName: OnBackPressed
         m_Mode: 1
         m_Arguments:
@@ -2417,6 +2429,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1903312173}
   m_CullTransparentMesh: 1
+--- !u!1 &2017817700
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2017817702}
+  - component: {fileID: 2017817703}
+  m_Layer: 0
+  m_Name: BackLogic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2017817702
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2017817700}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -135.60924, y: -41.999058, z: 467.0736}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2017817703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2017817700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526d2b7f0311082449a8accbd9d538f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &2073107512
 GameObject:
   m_ObjectHideFlags: 0
@@ -2684,3 +2740,4 @@ SceneRoots:
   - {fileID: 997277188}
   - {fileID: 1532403842}
   - {fileID: 1850026527}
+  - {fileID: 2017817702}

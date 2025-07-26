@@ -21,9 +21,8 @@ public class CamSwitch : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            if (MusicController.instance != null)
+            if (AudioManager.instance != null)
             {
-                MusicController.instance.PlayMusic(newMusic);
             }
             isTopDown = !isTopDown;
 

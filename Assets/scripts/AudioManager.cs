@@ -1,33 +1,35 @@
+// AudioManager.cs
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.SceneManagement; // Asegúrate de tener esta línea
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager instance; // Singleton instance
+    public static AudioManager instance;
 
-    public AudioMixer mixer;
+    public AudioMixer mixer; // ¡Este es crucial!
 
-    // AHORA SON PRIVADOS: Los sliders se encontrarán dinámicamente
+    // Sliders para la interfaz de usuario
     private Slider masterSlider;
     private Slider musicSlider;
     private Slider sfxSlider;
 
-    // Variables para los clips de audio de SFX
+    // Audio Clips para SFX
     public AudioClip hoverSound;
     public AudioClip clickSound;
-    private AudioSource sfxAudioSource; // AudioSource para reproducir los SFX
 
+    // Fuente de audio para SFX (esta sí la gestiona directamente AudioManager)
+    private AudioSource sfxAudioSource;
 
     void Awake()
     {
         if (instance == null)
         {
             instance = this;
-            DontDestroyOnLoad(gameObject); // ¡Este GameObject persistirá!
+            DontDestroyOnLoad(gameObject); // El AudioManager es persistente
 
-            // Inicialización del AudioSource para SFX
+            // Inicializar AudioSource de SFX
             sfxAudioSource = GetComponent<AudioSource>();
             if (sfxAudioSource == null)
             {
@@ -35,87 +37,90 @@ public class AudioManager : MonoBehaviour
             }
             sfxAudioSource.playOnAwake = false;
             sfxAudioSource.loop = false;
-            // Asegúrate de que el Output de este sfxAudioSource está en el grupo SFX del AudioMixer en el Inspector
+            // Opcional: Asignar el sfxAudioSource a un grupo SFX si tienes uno en tu mixer
+            // sfxAudioSource.outputAudioMixerGroup = mixer.FindMatchingGroups("SFX")[0]; 
+
         }
         else
         {
-            Destroy(gameObject); // Destruye duplicados
+            Destroy(gameObject);
             return;
         }
     }
 
     void OnEnable()
     {
-        // Suscribirse al evento de carga de escenas
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnDisable()
     {
-        // Desuscribirse para evitar fugas de memoria
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     void Start()
     {
-        // Aplicar los volúmenes guardados inmediatamente al inicio del juego.
-        // Esto asegura que los niveles de audio sean correctos incluso antes de cargar la escena de UI.
+        // Aplicar los volúmenes guardados al iniciar
         SetMasterVolume(PlayerPrefs.GetFloat("MasterVol", 1f));
         SetMusicVolume(PlayerPrefs.GetFloat("MusicVol", 1f));
         SetSFXVolume(PlayerPrefs.GetFloat("SFXVol", 1f));
     }
 
-    // Este método se llamará cada vez que se carga una escena
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Solo intentamos encontrar y configurar los sliders si estamos en la escena de "Audio"
-        // ¡CAMBIA "Audio" por el nombre exacto de tu escena de opciones de audio!
-        if (scene.name == "Audio" || scene.name == "Options" || scene.name == "AudioOptions") // Agrega todos los nombres posibles de tu escena de opciones
+        Debug.Log($"Escena '{scene.name}' cargada. Verificando sliders de audio.");
+
+        // Solo busca y configura los Sliders en las escenas de opciones
+        if (scene.name == "Audio" || scene.name == "Options" || scene.name == "AudioOptions")
         {
-            Debug.Log($"Scene '{scene.name}' loaded. Attempting to find sliders.");
-
-            // Encontrar los sliders por nombre. Asegúrate de que los nombres de tus GameObjects Slider
-            // en la jerarquía de la escena de Audio coincidan exactamente con estos nombres.
-            GameObject masterSliderGO = GameObject.Find("MasterSlider"); // Asume que el GameObject se llama "MasterSlider"
-            GameObject musicSliderGO = GameObject.Find("MusicSlider");   // Asume que el GameObject se llama "MusicSlider"
-            GameObject sfxSliderGO = GameObject.Find("VFXSlider");       // Basado en tu imagen anterior, el de SFX se llamaba "VFXSlider"
-
+            GameObject masterSliderGO = GameObject.Find("MasterSlider");
+            GameObject musicSliderGO = GameObject.Find("MusicSlider");
+            GameObject sfxSliderGO = GameObject.Find("SFXSlider"); // ¡Asegúrate de que este nombre sea correcto en tu UI!
 
             if (masterSliderGO != null) masterSlider = masterSliderGO.GetComponent<Slider>();
             if (musicSliderGO != null) musicSlider = musicSliderGO.GetComponent<Slider>();
             if (sfxSliderGO != null) sfxSlider = sfxSliderGO.GetComponent<Slider>();
 
-            // Si se encuentran los sliders, actualiza sus valores visuales y añade los listeners
             if (masterSlider != null)
             {
-                // Remueve listeners anteriores para evitar que se añadan múltiples veces
                 masterSlider.onValueChanged.RemoveAllListeners();
                 masterSlider.value = PlayerPrefs.GetFloat("MasterVol", 1f);
                 masterSlider.onValueChanged.AddListener(SetMasterVolume);
+                Debug.Log("MasterSlider encontrado y configurado.");
             }
+            else { Debug.LogWarning("MasterSlider no encontrado en la escena de opciones."); }
+
             if (musicSlider != null)
             {
                 musicSlider.onValueChanged.RemoveAllListeners();
                 musicSlider.value = PlayerPrefs.GetFloat("MusicVol", 1f);
                 musicSlider.onValueChanged.AddListener(SetMusicVolume);
+                Debug.Log("MusicSlider encontrado y configurado.");
             }
+            else { Debug.LogWarning("MusicSlider no encontrado en la escena de opciones."); }
+
             if (sfxSlider != null)
             {
                 sfxSlider.onValueChanged.RemoveAllListeners();
                 sfxSlider.value = PlayerPrefs.GetFloat("SFXVol", 1f);
                 sfxSlider.onValueChanged.AddListener(SetSFXVolume);
+                Debug.Log("SFXSlider encontrado y configurado.");
             }
+            else { Debug.LogWarning("SFXSlider no encontrado en la escena de opciones."); }
         }
-        else // Para otras escenas donde los sliders no están presentes
+        else
         {
-            // Limpiar las referencias a los sliders para evitar errores accidentales
+            // Si no es una escena de opciones, limpiar las referencias a los sliders
             masterSlider = null;
             musicSlider = null;
             sfxSlider = null;
+            Debug.Log($"Escena '{scene.name}' cargada, no es una escena de opciones. Referencias de slider limpiadas.");
         }
     }
 
-    // Métodos para establecer el volumen (sin cambios)
+    // --- Métodos de Control de Volumen (sin cambios, interactúan con el mixer) ---
+    // Estos volúmenes se aplican a los grupos del AudioMixer, ¡que es lo que controla la música y los SFX!
+
     public void SetMasterVolume(float value)
     {
         mixer.SetFloat("MasterVolume", Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20);
@@ -134,7 +139,8 @@ public class AudioManager : MonoBehaviour
         PlayerPrefs.SetFloat("SFXVol", value);
     }
 
-    // Métodos para reproducir SFX (sin cambios)
+    // --- Métodos de Reproducción de SFX (sin cambios) ---
+
     public void PlayHoverSound()
     {
         if (sfxAudioSource != null && hoverSound != null)
@@ -151,9 +157,10 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    // --- Método de Navegación de Escenas ---
+
     public void OnBackPressed()
     {
-        // Asegúrate de que "Options" es la escena correcta a la que deseas volver
         SceneManager.LoadScene("Options");
     }
 }

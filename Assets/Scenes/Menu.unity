@@ -1383,7 +1383,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1092384819}
   - component: {fileID: 1092384818}
-  - component: {fileID: 1092384820}
   m_Layer: 0
   m_Name: SFXManager
   m_TagString: Untagged
@@ -1503,21 +1502,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1092384820
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1092384817}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 91e4b58ffe9cb81498f486171433baaa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hoverSound: {fileID: 8300000, guid: bcc0b970d9205194589247c1705c6683, type: 3}
-  clickSound: {fileID: 8300000, guid: c1fed3f54cad87747b9363fe5815b098, type: 3}
-  sfxMixerGroup: {fileID: 7045259106344474481, guid: 9c77635fbb1d4b045a9f2ab06d13d0d7, type: 2}
 --- !u!1 &1402613941
 GameObject:
   m_ObjectHideFlags: 0
@@ -1811,9 +1795,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1509648395}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2118c3bf33f02414ea0e95ae38b3c486, type: 3}
+  m_Script: {fileID: 11500000, guid: 0d293c40bbdc28a4ab34df9538580e86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  musicMixerGroup: {fileID: -3290721033253241093, guid: 9c77635fbb1d4b045a9f2ab06d13d0d7, type: 2}
+  backgroundMusicClip: {fileID: 8300000, guid: ce97fce4cf71e474b8a0c371ffd0a12e, type: 3}
 --- !u!1 &1789204877
 GameObject:
   m_ObjectHideFlags: 0
