@@ -1,4 +1,3 @@
-// MusicManagerScript.cs
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
@@ -11,8 +10,11 @@ public class MusicManagerScript : MonoBehaviour
 
     [Header("Configuración de Música")]
     public AudioMixerGroup musicMixerGroup; // Asigna tu grupo 'Music' aquí en el Inspector
-    public AudioClip menuMusicClip;         // Asigna el clip de música del menú aquí
-    public AudioClip level1MusicClip;       // Asigna el clip de música del Nivel 1 aquí
+    public AudioClip menuMusicClip;          // Asigna el clip de música del menú aquí
+    public AudioClip level1MusicClip;        // Asigna el clip de música del Nivel 1 aquí
+    // --- NUEVO: Agrega un campo para la música del modo Top-Down
+    public AudioClip topDownMusicClip; // <-- Asigna la música para el modo Top-Down aquí
+    // -------------------------------------------------------------
 
     void Awake()
     {
@@ -63,7 +65,7 @@ public class MusicManagerScript : MonoBehaviour
             musicAudioSource = GetComponent<AudioSource>();
             if (musicAudioSource == null)
             {
-                Debug.LogError("MusicManager no tiene un AudioSource para controlar la música. Asegúrate de que está adjunto.");
+                Debug.LogError("MusicManager no tiene un AudioSource para controlar la música. Asegúrate de que esté adjunto.");
                 return;
             }
         }
@@ -120,7 +122,7 @@ public class MusicManagerScript : MonoBehaviour
         }
     }
 
-    // --- NUEVO: Métodos para controlar la música de forma explícita ---
+    // --- MÉTODOS PARA CONTROLAR LA MÚSICA DE FORMA EXPLÍCITA ---
     public void PauseMusic()
     {
         if (musicAudioSource != null && musicAudioSource.isPlaying)
@@ -158,8 +160,17 @@ public class MusicManagerScript : MonoBehaviour
         }
         else if (musicAudioSource != null && newClip != null && musicAudioSource.clip == newClip && !musicAudioSource.isPlaying)
         {
-            musicAudioSource.Play(); // Si ya es el mismo clip pero está pausado/detenido
+            // Si ya es el mismo clip pero está pausado/detenido, reanudar
+            musicAudioSource.Play();
             Debug.Log($"MusicManager: Reanudando reproducción de clip existente: {newClip.name}");
         }
+    }
+
+    // --- NUEVO: Método para obtener el clip de música actual del nivel (para volver a él)
+    public AudioClip GetCurrentLevelMusicClip()
+    {
+        // En tu caso, si siempre es "Level1", puedes devolver directamente level1MusicClip.
+        // Si tuvieras más niveles con música específica, necesitarías una lógica más compleja aquí.
+        return level1MusicClip;
     }
 }

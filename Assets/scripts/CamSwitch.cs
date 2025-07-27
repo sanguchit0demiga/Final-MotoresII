@@ -9,10 +9,9 @@ public class CamSwitch : MonoBehaviour
     public GameObject mainCameraGameObject;
 
     // Asigna AQUI TU Cinemachine Virtual Camera para la vista Top-Down
-    // Este campo ahora es del tipo CinemachineVirtualCamera para evitar advertencias de obsoleto.
     public CinemachineCamera topDownVirtualCamera;
 
-    public Navmesh[] enemies;
+    public Navmesh[] enemies; // Asegúrate de que Navmesh sea accesible o reemplázalo con el tipo correcto de script de enemigo.
 
     private bool isTopDownActive = false; // Para rastrear qué cámara está activa
 
@@ -24,6 +23,10 @@ public class CamSwitch : MonoBehaviour
     // Referencia al Player (para posibles usos, aunque la cámara Top-Down no lo siga directamente con un offset)
     public Transform playerTransform;
     public LayerMask groundLayer; // Capa del suelo para el raycast (¡Configúrala en el Inspector!)
+
+    // --- NUEVA REFERENCIA AL MUSICMANAGER ---
+    private MusicManagerScript musicManager;
+    // ----------------------------------------
 
     private void Awake()
     {
@@ -39,19 +42,19 @@ public class CamSwitch : MonoBehaviour
             }
         }
 
-        // Usa FindFirstObjectByType para evitar la advertencia de obsoleto
+        // Usa FindObjectOfType para evitar la advertencia de obsoleto
         if (topDownVirtualCamera == null)
         {
-            topDownVirtualCamera = FindFirstObjectByType<CinemachineCamera>();
+            topDownVirtualCamera = FindAnyObjectByType<CinemachineCamera>(); // Cambiado a FindObjectOfType
             if (topDownVirtualCamera == null)
             {
-                Debug.LogError("CamSwitch: La 'Top Down Virtual Camera' no está asignada en el Inspector y no se encontró una CinemachineVirtualCamera en la escena.", this);
+                Debug.LogError("CamSwitch: La 'Top Down Virtual Camera' no está asignada en el Inspector y no se encontró una CinemachineCamera en la escena.", this);
             }
         }
 
         if (playerTransform == null)
         {
-            PlayerController player = FindFirstObjectByType<PlayerController>();
+            PlayerController player = FindAnyObjectByType<PlayerController>(); // Cambiado a FindObjectOfType
             if (player != null)
             {
                 playerTransform = player.transform;
@@ -60,6 +63,13 @@ public class CamSwitch : MonoBehaviour
             {
                 Debug.LogWarning("CamSwitch: No se encontró el Transform del Player. El movimiento de cámara Top-Down por cursor puede no funcionar correctamente.");
             }
+        }
+
+        // Obtener la instancia del MusicManagerScript
+        musicManager = MusicManagerScript.instance;
+        if (musicManager == null)
+        {
+            Debug.LogError("CamSwitch: No se encontró la instancia de MusicManagerScript. Asegúrate de que haya uno en la escena y que tenga su script y DontDestroyOnLoad.");
         }
     }
 
@@ -72,7 +82,7 @@ public class CamSwitch : MonoBehaviour
             // Verifica que tenga CinemachineBrain, que es crucial
             if (mainCameraGameObject.GetComponent<CinemachineBrain>() == null)
             {
-                Debug.LogError("CamSwitch: ¡WARNING CRÍTICO! La 'Main Camera GameObject' NO TIENE un componente CinemachineBrain. Las cámaras Cinemachine NO funcionarerán.", mainCameraGameObject);
+                Debug.LogError("CamSwitch: ¡WARNING CRÍTICO! La 'Main Camera GameObject' NO TIENE un componente CinemachineBrain. Las cámaras Cinemachine NO funcionarán.", mainCameraGameObject);
             }
         }
 
@@ -97,6 +107,13 @@ public class CamSwitch : MonoBehaviour
 
     private void HandleTopDownCameraMovement()
     {
+        // Asegúrate de que Camera.main no sea nulo antes de usarlo. Esto se resuelve al etiquetar tu cámara como "MainCamera".
+        if (Camera.main == null)
+        {
+            Debug.LogError("CamSwitch: Camera.main es nula. Asegúrate de que tu cámara principal tenga la etiqueta 'MainCamera'.");
+            return;
+        }
+
         Ray ray = Camera.main.ScreenPointToRay(mouseScreenPosition);
         RaycastHit hit;
 
@@ -111,10 +128,6 @@ public class CamSwitch : MonoBehaviour
 
             topDownVirtualCamera.transform.position = Vector3.Lerp(currentCamPos, targetCamPos, topDownCameraMoveSpeed * Time.deltaTime);
         }
-        // else
-        // {
-        //     Debug.LogWarning("CamSwitch: Raycast del mouse no golpeó la groundLayer en modo Top-Down.");
-        // }
     }
 
     public void OnMouseLookTopDown(InputAction.CallbackContext context)
@@ -124,10 +137,8 @@ public class CamSwitch : MonoBehaviour
         if (isTopDownActive)
         {
             mouseScreenPosition = context.ReadValue<Vector2>();
-            // Debug.Log("Mouse Position (Top-Down): " + mouseScreenPosition); // Para depuración
         }
     }
-
 
     private void OnTriggerEnter(Collider other)
     {
@@ -136,17 +147,30 @@ public class CamSwitch : MonoBehaviour
             // Cambiar a Top-Down solo si no estamos ya en Top-Down
             if (!isTopDownActive)
             {
-                // NO desactives mainCameraGameObject. Solo activa la Virtual Camera de Top-Down.
                 if (topDownVirtualCamera != null)
                 {
                     topDownVirtualCamera.gameObject.SetActive(true); // Activa la Cinemachine Virtual Camera
                     isTopDownActive = true;
                     Debug.Log($"CamSwitch: Player entró al trigger. Cambiando a Top-Down. Top-Down Virtual Camera active: {topDownVirtualCamera.gameObject.activeSelf}.");
 
-                    // ¡Importante! Ocultar el cursor para que el mouse pueda moverse libremente sin interferir con la UI (si tienes UI)
-                    // Y para que el jugador vea el "lookTarget" sin ver el puntero normal del mouse
                     Cursor.lockState = CursorLockMode.None; // Liberar el cursor para moverlo
                     Cursor.visible = true; // Hacerlo visible si es necesario para un puntero custom, o dejarlo oculto para una "mira".
+
+                    // --- CAMBIO DE MÚSICA AL ENTRAR AL TRIGGER ---
+                    if (musicManager != null && musicManager.topDownMusicClip != null)
+                    {
+                        musicManager.SetMusicClipAndPlay(musicManager.topDownMusicClip);
+                        Debug.Log("CamSwitch: Solicitando cambio de música a Top-Down Music.");
+                    }
+                    else if (musicManager == null)
+                    {
+                        Debug.LogWarning("CamSwitch: MusicManager es nulo, no se pudo cambiar la música a Top-Down.");
+                    }
+                    else if (musicManager.topDownMusicClip == null)
+                    {
+                        Debug.LogWarning("CamSwitch: topDownMusicClip no está asignado en MusicManager, no se pudo cambiar la música.");
+                    }
+                    // ---------------------------------------------
                 }
                 else
                 {
@@ -155,11 +179,14 @@ public class CamSwitch : MonoBehaviour
 
                 foreach (var enemy in enemies)
                 {
-                    if (enemy != null) { enemy.StartFollowing(); }
+                    if (enemy != null) { enemy.StartFollowing(); } // Asegúrate de que los enemigos tengan el método StartFollowing()
                 }
             }
         }
     }
+
+    // ELIMINADO: OnTriggerExit para que la cámara y música Top-Down persistan.
+    // El cambio de vuelta a FPS y la música original ahora solo ocurrirá al llamar a ResetToFPS().
 
     public void ResetToFPS()
     {
@@ -175,6 +202,22 @@ public class CamSwitch : MonoBehaviour
             // ¡Importante! Volver a bloquear y ocultar el cursor para la vista FPS
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            // --- VOLVER A LA MÚSICA ORIGINAL DEL NIVEL ---
+            if (musicManager != null && musicManager.GetCurrentLevelMusicClip() != null)
+            {
+                musicManager.SetMusicClipAndPlay(musicManager.GetCurrentLevelMusicClip());
+                Debug.Log("CamSwitch: Volviendo a la música del Nivel 1.");
+            }
+            else if (musicManager == null)
+            {
+                Debug.LogWarning("CamSwitch: MusicManager es nulo, no se pudo volver a la música del nivel.");
+            }
+            else if (musicManager.GetCurrentLevelMusicClip() == null)
+            {
+                Debug.LogWarning("CamSwitch: CurrentLevelMusicClip no está asignado en MusicManager, no se pudo volver a la música del nivel.");
+            }
+            // --------------------------------------------
         }
         else
         {

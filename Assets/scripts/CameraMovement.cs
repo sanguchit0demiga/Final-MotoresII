@@ -60,4 +60,13 @@ public class CameraMovement : MonoBehaviour
             // entonces la cámara ya estará alineada horizontalmente.
         }
     }
+    // En tu script CameraMovement.cs
+    public void ReceiveMouseInput(Vector2 input)
+    {
+        // Aquí iría tu lógica para rotar la cámara FPS con el input del mouse
+        // Por ejemplo:
+        // float mouseX = input.x * mouseSensitivity * Time.deltaTime;
+        // float mouseY = input.y * mouseSensitivity * Time.deltaTime;
+        // ... (el resto de tu lógica de rotación de cámara)
+    }
 }

@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI; // Necesario para Text
+using UnityEngine.SceneManagement; // Necesario para cambiar de escena
+using System.Collections; // ¡MUY IMPORTANTE: Necesario para Coroutines!
 
 public class PlayerController : MonoBehaviour
 {
@@ -26,7 +28,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 wallNormal;
     private Vector3 wallJumpHorizontalVelocity = Vector3.zero;
 
-    private float maxhHealth = 100f;
+    public float maxHealth = 100f;
     public float currentHealth;
     private Vector3 posicionInicial;
 
@@ -37,11 +39,11 @@ public class PlayerController : MonoBehaviour
     private float nextFireTime = 0f;
     public ParticleSystem muzzleFlash;
 
-    public CamSwitch camSwitcher; // Referencia al script CamSwitch
-    public CameraMovement playerCameraMovement; // Referencia al script CameraMovement
+    public CamSwitch camSwitcher;
+    public CameraMovement playerCameraMovement;
 
     public int ammo = 25;
-    public int maxAmmo = 25;
+    public int maxAmmo = 25; // Asumo que este es el que quieres para la munición máxima
     public Text ammoDisplay;
 
     public AudioSource gunShotAudio;
@@ -49,12 +51,26 @@ public class PlayerController : MonoBehaviour
     public AudioSource footstepAudio;
     public AudioSource jumpAudio;
 
-    // --- NUEVAS VARIABLES PARA ROTACIÓN TOP-DOWN ---
-    private Vector2 mouseScreenPosition; // Posición del mouse en la pantalla
-    private Vector3 lookTarget;          // Punto en el suelo al que el jugador debe mirar
-    public LayerMask groundLayer;        // ¡Asegúrate de configurar esta capa en el Inspector!
-    // ----------------------------------------------
+    private Vector2 mouseScreenPosition;
+    private Vector3 lookTarget;
+    public LayerMask groundLayer;
 
+    public HealthBarUI healthBarUI;
+    public string gameOverSceneName = "GameOverScene";
+
+    // --- Variables de Audio de Muerte ---
+    public AudioSource deathAudioSource; // AudioSource para el sonido de muerte
+    public AudioClip deathSoundClip;     // El clip de audio del sonido de muerte
+    public float delayBeforeDefeatScene = 0.5f; // <<<<<< ¡IMPORTANTE: Agregamos esta variable de nuevo!
+    // -------------------------------------
+
+    // --- Variables para el manejo del arma ---
+    public GameObject playerWeapon;
+    private Transform fpsCameraTransform;
+    private bool wasTopDownMode = false;
+    private bool isDead = false;
+
+    // ------------------------------------------
 
     void Awake()
     {
@@ -62,7 +78,8 @@ public class PlayerController : MonoBehaviour
 
         if (camSwitcher == null)
         {
-            camSwitcher = FindFirstObjectByType<CamSwitch>(); // Usa FindFirstObjectByType
+            // Preferir FindObjectOfType para obtener la primera instancia si solo hay una
+            camSwitcher = FindAnyObjectByType<CamSwitch>();
             if (camSwitcher == null)
             {
                 Debug.LogError("PlayerController: No se encontró un CamSwitch en la escena. El reseteo de cámara en muerte podría fallar.");
@@ -80,39 +97,103 @@ public class PlayerController : MonoBehaviour
                 Debug.LogError("PlayerController: No se encontró el script 'CameraMovement' en la Main Camera. Asegúrate de que esté adjunto a tu Main Camera GameObject.");
             }
         }
+
+        if (healthBarUI == null)
+        {
+            // Preferir FindObjectOfType para obtener la primera instancia si solo hay una
+            healthBarUI = FindAnyObjectByType<HealthBarUI>();
+            if (healthBarUI == null)
+            {
+                Debug.LogWarning("PlayerController: No se encontró un HealthBarUI en la escena. La barra de vida de la UI no se actualizará.");
+            }
+        }
+
+        if (Camera.main != null)
+        {
+            fpsCameraTransform = Camera.main.transform;
+        }
+        else
+        {
+            Debug.LogError("PlayerController: No se encontró la Main Camera. El arma no podrá seguir la cámara FPS.");
+        }
+
+        // Opcional: Si deathAudioSource no se asigna, intenta obtenerlo del mismo GameObject
+        // Esto es útil si el AudioSource está en el mismo objeto que el PlayerController.
+        if (deathAudioSource == null)
+        {
+            deathAudioSource = GetComponent<AudioSource>();
+            if (deathAudioSource == null)
+            {
+                Debug.LogWarning("PlayerController: No se encontró un AudioSource para el sonido de muerte en este GameObject. Asigna uno en el Inspector o asegúrate de que esté adjunto al mismo GameObject.");
+            }
+        }
     }
 
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked; // Cursor bloqueado para FPS al inicio
+        Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        currentHealth = maxhHealth;
+        currentHealth = maxHealth;
         posicionInicial = transform.position;
         UpdateAmmoDisplay();
+
+        if (healthBarUI != null)
+        {
+            healthBarUI.SetMaxHealth(maxHealth);
+            healthBarUI.SetHealth(currentHealth);
+        }
+
+        if (playerWeapon != null && fpsCameraTransform != null)
+        {
+            playerWeapon.transform.SetParent(fpsCameraTransform);
+            // playerWeapon.transform.localPosition = new Vector3(0.5f, -0.4f, 0.8f);
+            // playerWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f); 
+        }
+
+        wasTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
     }
 
     void Update()
     {
         CheckForWalls();
+         if (isDead) return;
 
-        // Obtener el estado actual de la cámara del CamSwitch
-        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive(); // Necesitamos un método IsTopDownActive en CamSwitch
+        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
+
+        if (playerWeapon != null && camSwitcher != null)
+        {
+            if (isTopDownMode && !wasTopDownMode)
+            {
+                playerWeapon.transform.SetParent(transform);
+                // playerWeapon.transform.localPosition = new Vector3(0.2f, 0.5f, 0f); 
+                // playerWeapon.transform.localRotation = Quaternion.identity; 
+            }
+            else if (!isTopDownMode && wasTopDownMode)
+            {
+                if (fpsCameraTransform != null)
+                {
+                    playerWeapon.transform.SetParent(fpsCameraTransform);
+                    // playerWeapon.transform.localPosition = new Vector3(0.5f, -0.4f, 0.8f);
+                    // playerWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
+                }
+            }
+        }
+        wasTopDownMode = isTopDownMode;
 
         Vector3 move;
 
-        if (!isTopDownMode) // Lógica de movimiento FPS
+        if (!isTopDownMode)
         {
             move = orientation.forward * input.y + orientation.right * input.x;
             move *= moveSpeed;
         }
-        else // Lógica de movimiento y rotación Top-Down
+        else
         {
-            move = new Vector3(input.x, 0f, input.y).normalized * moveSpeed; // Movimiento relativo al mundo
+            move = new Vector3(input.x, 0f, input.y).normalized * moveSpeed;
 
-            // Rotación del personaje para mirar al cursor
-            lookTarget.y = transform.position.y; // Mantener la altura del jugador para el LookAt
-            transform.LookAt(lookTarget); // El jugador mira hacia el punto del cursor
+            lookTarget.y = transform.position.y;
+            transform.LookAt(lookTarget);
         }
 
         if (controller.isGrounded)
@@ -136,7 +217,6 @@ public class PlayerController : MonoBehaviour
             wallJumpHorizontalVelocity = Vector3.Lerp(wallJumpHorizontalVelocity, Vector3.zero, 10f * Time.deltaTime);
         }
 
-        // La lógica de Wall Running solo se aplica en modo FPS
         isWallRunning = !isTopDownMode && (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
 
         if (isWallRunning)
@@ -166,7 +246,6 @@ public class PlayerController : MonoBehaviour
 
     void CheckForWalls()
     {
-        // Solo comprueba paredes en modo FPS
         if (camSwitcher == null || !camSwitcher.IsTopDownActive())
         {
             RaycastHit hit;
@@ -191,7 +270,6 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext ctx)
     {
-        // La lógica de salto de pared solo para FPS
         if (camSwitcher == null || !camSwitcher.IsTopDownActive())
         {
             if (ctx.started)
@@ -214,7 +292,6 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-        // En modo Top-Down, el salto podría ser simplemente un salto vertical normal.
         else if (ctx.started && controller.isGrounded)
         {
             verticalVelocity = jumpForce;
@@ -223,10 +300,8 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // --- MÉTODO PARA MANEJAR EL MOUSE LOOK EN TOP-DOWN ---
     public void OnMouseLook(InputAction.CallbackContext context)
     {
-        // Solo actualizamos la posición del mouse y el lookTarget si estamos en modo Top-Down
         if (camSwitcher != null && camSwitcher.IsTopDownActive())
         {
             mouseScreenPosition = context.ReadValue<Vector2>();
@@ -234,25 +309,34 @@ public class PlayerController : MonoBehaviour
             Ray ray = Camera.main.ScreenPointToRay(mouseScreenPosition);
             RaycastHit hit;
 
-            // Lanzar un rayo y verificar si golpea algo en la 'groundLayer'
             if (Physics.Raycast(ray, out hit, Mathf.Infinity, groundLayer))
             {
                 lookTarget = hit.point;
             }
             else
             {
-                // Esto te ayudará a depurar si el rayo no golpea nada.
-                // Asegúrate de que tu suelo tenga un collider y la capa 'Ground' asignada.
                 Debug.LogWarning("PlayerController: Raycast del mouse no golpeó la groundLayer. Asegúrate de que el suelo tenga un collider y la capa 'Ground'.");
             }
         }
+        else
+        {
+            if (playerCameraMovement != null && context.phase == InputActionPhase.Performed)
+            {
+                playerCameraMovement.ReceiveMouseInput(context.ReadValue<Vector2>());
+            }
+        }
     }
-    // -------------------------------------------------------------
 
     public void TakeDamage(float damageAmount)
     {
         currentHealth -= damageAmount;
+        currentHealth = Mathf.Max(currentHealth, 0);
         Debug.Log("vida actual: " + currentHealth);
+
+        if (healthBarUI != null)
+        {
+            healthBarUI.SetHealth(currentHealth);
+        }
 
         if (currentHealth <= 0)
         {
@@ -262,8 +346,45 @@ public class PlayerController : MonoBehaviour
 
     public void Die()
     {
+        if (isDead) return;
+
+        isDead = true;
         controller.enabled = false;
 
+       
+        if (MusicManagerScript.instance != null)
+        {
+            MusicManagerScript.instance.StopMusic();
+        }
+
+        if (deathAudioSource != null && deathSoundClip != null)
+        {
+            deathAudioSource.PlayOneShot(deathSoundClip);
+            StartCoroutine(LoadDefeatSceneAfterDelay(delayBeforeDefeatScene));
+        }
+        else
+        {
+            LoadDefeatScene();
+        }
+    }
+
+    // --- Corrutina para esperar antes de cargar la escena ---
+    IEnumerator LoadDefeatSceneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        // Espera adicional si el audio sigue sonando
+        while (deathAudioSource != null && deathAudioSource.isPlaying)
+        {
+            yield return null; // Espera al siguiente frame
+        }
+
+        SceneManager.LoadScene("Defeat");
+    }
+
+    // --- Método para cargar la escena de derrota (centralizado) ---
+    private void LoadDefeatScene()
+    {
         if (camSwitcher != null)
         {
             camSwitcher.ResetToFPS();
@@ -273,9 +394,6 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogWarning("PlayerController: camSwitcher es nulo. No se pudo resetear la cámara a FPS.");
         }
-
-        transform.position = posicionInicial;
-        Debug.Log("PlayerController: Jugador movido a la posición inicial: " + posicionInicial);
 
         if (playerCameraMovement != null)
         {
@@ -287,17 +405,12 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("PlayerController: playerCameraMovement es nulo. No se pudo recentrar la cámara FPS.");
         }
 
-        currentHealth = maxhHealth;
-        Debug.Log("PlayerController: Salud restablecida a: " + currentHealth);
+        Debug.Log("PlayerController: ¡El jugador ha muerto! Cargando escena de derrota...");
 
-        controller.enabled = true;
-        Debug.Log("PlayerController: CharacterController re-habilitado.");
-
-        verticalVelocity = 0f;
-        isJumping = false;
-        isWallRunning = false;
-        wallJumpHorizontalVelocity = Vector3.zero;
+        // Cargar directamente la escena "Defeat"
+        SceneManager.LoadScene("Defeat");
     }
+    // ---------------------------------------------------------------
 
     public void OnFire(InputAction.CallbackContext ctx)
     {
@@ -325,12 +438,30 @@ public class PlayerController : MonoBehaviour
             gunShotAudio.Play();
         }
 
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        Vector3 shootDirection;
+        Quaternion bulletRotation;
+
+        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
+
+        if (isTopDownMode)
+        {
+            shootDirection = transform.forward;
+            shootDirection.y = 0;
+            shootDirection.Normalize();
+            bulletRotation = Quaternion.LookRotation(shootDirection);
+        }
+        else
+        {
+            shootDirection = Camera.main.transform.forward;
+            bulletRotation = Camera.main.transform.rotation;
+        }
+
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, bulletRotation);
+
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            // La bala siempre debería disparar hacia donde el jugador está mirando.
-            rb.AddForce(transform.forward * bulletForce, ForceMode.Impulse);
+            rb.AddForce(shootDirection * bulletForce, ForceMode.Impulse);
         }
 
         Destroy(bullet, 4f);
@@ -362,7 +493,7 @@ public class PlayerController : MonoBehaviour
             reloadAudio.Play();
         }
 
-        ammo = maxAmmo;
+        ammo = maxAmmo; // Usar maxAmmo
         UpdateAmmoDisplay();
         Debug.Log("Recargado");
     }
