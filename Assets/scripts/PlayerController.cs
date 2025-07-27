@@ -20,7 +20,7 @@ public class PlayerController : MonoBehaviour
     private bool isWallRunning = false;
     private bool wallLeft, wallRight;
 
-    public Transform orientation;
+    public Transform orientation; // Este es para la vista FPS.
     public LayerMask wallLayer;
 
     private Vector3 wallNormal;
@@ -28,7 +28,7 @@ public class PlayerController : MonoBehaviour
 
     private float maxhHealth = 100f;
     public float currentHealth;
-    private Vector3 posicionInicial; // Esta será la posición de reaparición
+    private Vector3 posicionInicial;
 
     public GameObject bulletPrefab;
     public Transform firePoint;
@@ -37,38 +37,40 @@ public class PlayerController : MonoBehaviour
     private float nextFireTime = 0f;
     public ParticleSystem muzzleFlash;
 
-    public CamSwitch camSwitcher; // ¡Aquí la referencia al script CamSwitch!
-    public CameraMovement playerCameraMovement; // <-- ¡NUEVA REFERENCIA para tu script CameraMovement!
+    public CamSwitch camSwitcher; // Referencia al script CamSwitch
+    public CameraMovement playerCameraMovement; // Referencia al script CameraMovement
 
     public int ammo = 25;
     public int maxAmmo = 25;
-    public Text ammoDisplay; // ¡Importante! Asegúrate de que este es un componente Text UI
+    public Text ammoDisplay;
 
     public AudioSource gunShotAudio;
     public AudioSource reloadAudio;
     public AudioSource footstepAudio;
     public AudioSource jumpAudio;
 
+    // --- NUEVAS VARIABLES PARA ROTACIÓN TOP-DOWN ---
+    private Vector2 mouseScreenPosition; // Posición del mouse en la pantalla
+    private Vector3 lookTarget;          // Punto en el suelo al que el jugador debe mirar
+    public LayerMask groundLayer;        // ¡Asegúrate de configurar esta capa en el Inspector!
+    // ----------------------------------------------
+
 
     void Awake()
     {
         controller = GetComponent<CharacterController>();
 
-        // Intenta encontrar CamSwitch si no ha sido asignado en el Inspector
         if (camSwitcher == null)
         {
-            camSwitcher = FindFirstObjectByType<CamSwitch>();
+            camSwitcher = FindFirstObjectByType<CamSwitch>(); // Usa FindFirstObjectByType
             if (camSwitcher == null)
             {
                 Debug.LogError("PlayerController: No se encontró un CamSwitch en la escena. El reseteo de cámara en muerte podría fallar.");
             }
         }
 
-        // Intenta encontrar CameraMovement si no ha sido asignado en el Inspector
-        // Asumiendo que CameraMovement está en el mismo GameObject que la Main Camera (Camera.main)
         if (playerCameraMovement == null)
         {
-            // Camera.main busca la cámara con la etiqueta "MainCamera". Asegúrate de que tu cámara FPS la tenga.
             if (Camera.main != null)
             {
                 playerCameraMovement = Camera.main.GetComponent<CameraMovement>();
@@ -82,11 +84,11 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.lockState = CursorLockMode.Locked; // Cursor bloqueado para FPS al inicio
         Cursor.visible = false;
 
         currentHealth = maxhHealth;
-        posicionInicial = transform.position; // Guarda la posición inicial del jugador como punto de reaparición
+        posicionInicial = transform.position;
         UpdateAmmoDisplay();
     }
 
@@ -94,8 +96,24 @@ public class PlayerController : MonoBehaviour
     {
         CheckForWalls();
 
-        Vector3 move = orientation.forward * input.y + orientation.right * input.x;
-        move *= moveSpeed;
+        // Obtener el estado actual de la cámara del CamSwitch
+        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive(); // Necesitamos un método IsTopDownActive en CamSwitch
+
+        Vector3 move;
+
+        if (!isTopDownMode) // Lógica de movimiento FPS
+        {
+            move = orientation.forward * input.y + orientation.right * input.x;
+            move *= moveSpeed;
+        }
+        else // Lógica de movimiento y rotación Top-Down
+        {
+            move = new Vector3(input.x, 0f, input.y).normalized * moveSpeed; // Movimiento relativo al mundo
+
+            // Rotación del personaje para mirar al cursor
+            lookTarget.y = transform.position.y; // Mantener la altura del jugador para el LookAt
+            transform.LookAt(lookTarget); // El jugador mira hacia el punto del cursor
+        }
 
         if (controller.isGrounded)
         {
@@ -118,7 +136,8 @@ public class PlayerController : MonoBehaviour
             wallJumpHorizontalVelocity = Vector3.Lerp(wallJumpHorizontalVelocity, Vector3.zero, 10f * Time.deltaTime);
         }
 
-        isWallRunning = (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
+        // La lógica de Wall Running solo se aplica en modo FPS
+        isWallRunning = !isTopDownMode && (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
 
         if (isWallRunning)
         {
@@ -147,13 +166,22 @@ public class PlayerController : MonoBehaviour
 
     void CheckForWalls()
     {
-        RaycastHit hit;
+        // Solo comprueba paredes en modo FPS
+        if (camSwitcher == null || !camSwitcher.IsTopDownActive())
+        {
+            RaycastHit hit;
 
-        wallRight = Physics.Raycast(transform.position, orientation.right, out hit, wallCheckDistance, wallLayer);
-        if (wallRight) wallNormal = hit.normal;
+            wallRight = Physics.Raycast(transform.position, orientation.right, out hit, wallCheckDistance, wallLayer);
+            if (wallRight) wallNormal = hit.normal;
 
-        wallLeft = Physics.Raycast(transform.position, -orientation.right, out hit, wallCheckDistance, wallLayer);
-        if (wallLeft) wallNormal = hit.normal;
+            wallLeft = Physics.Raycast(transform.position, -orientation.right, out hit, wallCheckDistance, wallLayer);
+            if (wallLeft) wallNormal = hit.normal;
+        }
+        else
+        {
+            wallLeft = false;
+            wallRight = false;
+        }
     }
 
     public void OnMove(InputAction.CallbackContext ctx)
@@ -163,34 +191,63 @@ public class PlayerController : MonoBehaviour
 
     public void OnJump(InputAction.CallbackContext ctx)
     {
-        if (ctx.started)
+        // La lógica de salto de pared solo para FPS
+        if (camSwitcher == null || !camSwitcher.IsTopDownActive())
         {
-            if (controller.isGrounded)
+            if (ctx.started)
             {
-                isJumping = true;
-                if (jumpAudio != null)
-                    jumpAudio.Play();
+                if (controller.isGrounded)
+                {
+                    isJumping = true;
+                    if (jumpAudio != null)
+                        jumpAudio.Play();
+                }
+                else if (isWallRunning)
+                {
+                    verticalVelocity = jumpForce;
+                    Vector3 wallJumpDir = (wallNormal + Vector3.up).normalized;
+                    wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
+
+                    isWallRunning = false;
+                    if (jumpAudio != null)
+                        jumpAudio.Play();
+                }
             }
-            else if (isWallRunning)
+        }
+        // En modo Top-Down, el salto podría ser simplemente un salto vertical normal.
+        else if (ctx.started && controller.isGrounded)
+        {
+            verticalVelocity = jumpForce;
+            if (jumpAudio != null)
+                jumpAudio.Play();
+        }
+    }
+
+    // --- MÉTODO PARA MANEJAR EL MOUSE LOOK EN TOP-DOWN ---
+    public void OnMouseLook(InputAction.CallbackContext context)
+    {
+        // Solo actualizamos la posición del mouse y el lookTarget si estamos en modo Top-Down
+        if (camSwitcher != null && camSwitcher.IsTopDownActive())
+        {
+            mouseScreenPosition = context.ReadValue<Vector2>();
+
+            Ray ray = Camera.main.ScreenPointToRay(mouseScreenPosition);
+            RaycastHit hit;
+
+            // Lanzar un rayo y verificar si golpea algo en la 'groundLayer'
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, groundLayer))
             {
-                verticalVelocity = jumpForce;
-                Vector3 wallJumpDir = (wallNormal + Vector3.up).normalized;
-                wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
-
-                isWallRunning = false;
-                if (jumpAudio != null)
-                    jumpAudio.Play();
-
-                // Este bloque duplicado debería ser revisado o eliminado.
-                // Ya la lógica de salto desde la pared se maneja arriba.
-                // if (isJumping) 
-                // {
-                //     verticalVelocity = jumpForce;
-                //     isJumping = false;
-                // }
+                lookTarget = hit.point;
+            }
+            else
+            {
+                // Esto te ayudará a depurar si el rayo no golpea nada.
+                // Asegúrate de que tu suelo tenga un collider y la capa 'Ground' asignada.
+                Debug.LogWarning("PlayerController: Raycast del mouse no golpeó la groundLayer. Asegúrate de que el suelo tenga un collider y la capa 'Ground'.");
             }
         }
     }
+    // -------------------------------------------------------------
 
     public void TakeDamage(float damageAmount)
     {
@@ -199,16 +256,14 @@ public class PlayerController : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            Die(); // Llama al método Die()
+            Die();
         }
     }
 
     public void Die()
     {
-        // 1. Deshabilitar el CharacterController para evitar colisiones y movimiento mientras reaparece
         controller.enabled = false;
 
-        // 2. Restablecer la cámara a FPS usando CamSwitch
         if (camSwitcher != null)
         {
             camSwitcher.ResetToFPS();
@@ -219,14 +274,12 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("PlayerController: camSwitcher es nulo. No se pudo resetear la cámara a FPS.");
         }
 
-        // 3. Mover al jugador a la posición inicial (reaparición)
         transform.position = posicionInicial;
         Debug.Log("PlayerController: Jugador movido a la posición inicial: " + posicionInicial);
 
-        // 4. ¡Llamar al método para recentrar la cámara FPS en la nueva posición del jugador!
         if (playerCameraMovement != null)
         {
-            playerCameraMovement.RecenterCamera(); // Llama al método del script CameraMovement
+            playerCameraMovement.RecenterCamera();
             Debug.Log("PlayerController: Recentrando la cámara FPS después de reaparecer.");
         }
         else
@@ -234,15 +287,12 @@ public class PlayerController : MonoBehaviour
             Debug.LogWarning("PlayerController: playerCameraMovement es nulo. No se pudo recentrar la cámara FPS.");
         }
 
-        // 5. Restablecer la salud
         currentHealth = maxhHealth;
         Debug.Log("PlayerController: Salud restablecida a: " + currentHealth);
 
-        // 6. Re-habilitar el CharacterController
         controller.enabled = true;
         Debug.Log("PlayerController: CharacterController re-habilitado.");
 
-        // Opcional: Si necesitas resetear otras cosas (velocidad, animaciones, etc.)
         verticalVelocity = 0f;
         isJumping = false;
         isWallRunning = false;
@@ -279,7 +329,8 @@ public class PlayerController : MonoBehaviour
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.AddForce(firePoint.forward * bulletForce, ForceMode.Impulse);
+            // La bala siempre debería disparar hacia donde el jugador está mirando.
+            rb.AddForce(transform.forward * bulletForce, ForceMode.Impulse);
         }
 
         Destroy(bullet, 4f);
