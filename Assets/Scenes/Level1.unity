@@ -8598,8 +8598,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 194874956}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.29, z: 0.089}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 10.000001, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8619,6 +8619,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerBody: {fileID: 312167931}
   mouseSensitivity: 703.9
+  cameraHeightOffset: 1.2
 --- !u!114 &194874959
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14412,6 +14413,7 @@ MonoBehaviour:
   fireRate: 0.2
   muzzleFlash: {fileID: 1167613694}
   camSwitcher: {fileID: 2112282900}
+  playerCameraMovement: {fileID: 194874958}
   ammo: 25
   maxAmmo: 25
   ammoDisplay: {fileID: 575479982}
@@ -23027,15 +23029,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4594387203042112595, guid: ac5da999cac71d8419e8285257fefdfd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 4594387203042112595, guid: ac5da999cac71d8419e8285257fefdfd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 7.2
       objectReference: {fileID: 0}
     - target: {fileID: 4594387203042112595, guid: ac5da999cac71d8419e8285257fefdfd, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 62
       objectReference: {fileID: 0}
     - target: {fileID: 4594387203042112595, guid: ac5da999cac71d8419e8285257fefdfd, type: 3}
       propertyPath: m_LocalRotation.w
@@ -34647,7 +34649,7 @@ Transform:
   m_GameObject: {fileID: 744986797}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 18.21, z: 62.24}
+  m_LocalPosition: {x: -1, y: 17.2, z: 62}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -95092,12 +95094,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 297b027a01968c749a6c0f9a598ffdc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fpsCamera: {fileID: 194874956}
-  topDownCamObject: {fileID: 744986797}
+  mainCameraGameObject: {fileID: 194874956}
+  topDownVirtualCamera: {fileID: 744986797}
   enemies:
   - {fileID: 51837765}
   - {fileID: 341249152}
-  newMusic: {fileID: 8300000, guid: ae5b25b000a243548bccee2082f31ca6, type: 3}
 --- !u!65 &2112282901
 BoxCollider:
   m_ObjectHideFlags: 0

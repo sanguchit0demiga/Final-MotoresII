@@ -1,121 +1,116 @@
 using Unity.Cinemachine;
 using UnityEngine;
-using System.Collections; // Aunque no lo uses, es buena práctica si te lo sugiere el IDE
 
 public class CamSwitch : MonoBehaviour
 {
-    // Asigna aquí tu GameObject de la cámara FPS estándar
-    // Debe tener un componente 'Camera' de Unity.
-    public GameObject fpsCamera;
+    // Asigna AQUI TU 'Main Camera' (el GameObject que tiene Camera y CinemachineBrain)
+    // Este GameObject DEBE PERMANECER SIEMPRE ACTIVO en la jerarquía.
+    public GameObject mainCameraGameObject;
 
-    // Asigna aquí tu GameObject de la Cinemachine Virtual Camera (la Top-Down)
-    // Debe tener un componente 'CinemachineVirtualCamera'.
-    public GameObject topDownCamObject;
+    // Asigna AQUI TU Cinemachine Virtual Camera para la vista Top-Down
+    // Este GameObject se activará/desactivará para cambiar la vista.
+    public GameObject topDownVirtualCamera;
 
     public Navmesh[] enemies;
 
-    // Usamos 'isTopDownActive' para indicar si la cámara Top-Down está en uso
-    private bool isTopDownActive = false;
-    public AudioClip newMusic;
+    private bool isTopDownActive = false; // Para rastrear qué cámara está activa
 
-    // Referencia al MusicManagerScript (asegúrate de que existe o bórralo si no lo usas)
-    // private MusicManagerScript musicManager; 
+    // --- Otros campos y métodos no relacionados con la cámara se omiten para enfocar la solución ---
+    // public AudioClip newMusic;
+    // ...
 
     private void Awake()
     {
-        // if (musicManager == null)
-        // {
-        //     musicManager = FindObjectOfType<MusicManagerScript>();
-        // }
+        // Esto es útil si no asignas las referencias en el Inspector
+        // Aunque siempre es mejor asignarlas manualmente si son fijas en la escena.
+        if (mainCameraGameObject == null)
+        {
+            if (Camera.main != null)
+            {
+                mainCameraGameObject = Camera.main.gameObject;
+            }
+            if (mainCameraGameObject == null)
+            {
+                Debug.LogError("CamSwitch: La 'Main Camera GameObject' no está asignada en el Inspector y no se encontró una Main Camera en la escena.", this);
+            }
+        }
 
-        // Añadir una verificación de referencias cruciales
-        if (fpsCamera == null) Debug.LogError("CamSwitch: fpsCamera NO ASIGNADA en el Inspector.", this);
-        if (topDownCamObject == null) Debug.LogError("CamSwitch: topDownCamObject NO ASIGNADA en el Inspector.", this);
+        if (topDownVirtualCamera == null)
+        {
+            // Usa FindAnyObjectByType para evitar la advertencia de obsoleto
+            topDownVirtualCamera = FindAnyObjectByType<CinemachineVirtualCamera>()?.gameObject;
+            if (topDownVirtualCamera == null)
+            {
+                Debug.LogError("CamSwitch: La 'Top Down Virtual Camera' no está asignada en el Inspector y no se encontró una CinemachineVirtualCamera en la escena.", this);
+            }
+        }
     }
 
     private void Start()
     {
-        // Asegúrate de un estado inicial claro
-        // Al inicio, la cámara FPS debe estar activa y la Top-Down inactiva
-        fpsCamera.SetActive(true);
-        topDownCamObject.SetActive(false);
-        isTopDownActive = false;
-        Debug.Log($"CamSwitch: Start. FPS Camera Active: {fpsCamera.activeSelf}, Top-Down Cam Active: {topDownCamObject.activeSelf}.");
-
-        // Verifica si la Main Camera tiene CinemachineBrain al inicio
-        Camera mainCam = Camera.main;
-        if (mainCam != null)
+        // Asegúrate de que la Main Camera esté activa al inicio (siempre debe estarlo)
+        if (mainCameraGameObject != null)
         {
-            if (mainCam.GetComponent<CinemachineBrain>() == null)
+            mainCameraGameObject.SetActive(true);
+            // Verifica que tenga CinemachineBrain, que es crucial
+            if (mainCameraGameObject.GetComponent<CinemachineBrain>() == null)
             {
-                Debug.LogError("CamSwitch: La Main Camera NO TIENE un componente CinemachineBrain. Las cámaras Cinemachine no funcionarán correctamente.", mainCam.gameObject);
+                Debug.LogError("CamSwitch: ¡WARNING CRÍTICO! La 'Main Camera GameObject' NO TIENE un componente CinemachineBrain. Las cámaras Cinemachine NO funcionarán.", mainCameraGameObject);
             }
         }
-        else
+
+        // Al inicio, la cámara FPS (vista por defecto de Main Camera) está activa.
+        // Por lo tanto, la Cinemachine Virtual Camera (Top-Down) debe estar inactiva.
+        if (topDownVirtualCamera != null)
         {
-            Debug.LogError("CamSwitch: No se encontró la Main Camera en la escena. ¡Necesitas una para que las cámaras funcionen!");
+            topDownVirtualCamera.SetActive(false);
         }
+        isTopDownActive = false;
+        Debug.Log($"CamSwitch: Start. FPS (Main Camera) activa. Top-Down Virtual Camera inactiva. isTopDownActive: {isTopDownActive}.");
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            // Solo cambia de cámara si no estamos ya en Top-Down
+            // Cambiar a Top-Down solo si no estamos ya en Top-Down
             if (!isTopDownActive)
             {
-                // Desactiva la cámara FPS estándar
-                fpsCamera.SetActive(false);
-                // Activa la Cinemachine Virtual Camera (Top-Down)
-                topDownCamObject.SetActive(true);
-                isTopDownActive = true;
-
-                Debug.Log($"CamSwitch: Player entró al trigger. Cambiando a Top-Down (Cinemachine). " +
-                          $"FPS Cam active: {fpsCamera.activeSelf}, Top-Down Cam active: {topDownCamObject.activeSelf}.");
-
-                // Lógica para cambiar música
-                if (AudioManager.instance != null && newMusic != null)
+                // NO desactives mainCameraGameObject. Solo activa la Virtual Camera de Top-Down.
+                if (topDownVirtualCamera != null)
                 {
-                    if (MusicManagerScript.instance != null) // Asumiendo que MusicManagerScript existe
-                    {
-                        MusicManagerScript.instance.SetMusicClipAndPlay(newMusic);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("CamSwitch: MusicManagerScript.instance es nulo, no se pudo cambiar la música.");
-                    }
+                    topDownVirtualCamera.SetActive(true); // Activa la Cinemachine Virtual Camera
+                    isTopDownActive = true;
+                    Debug.Log($"CamSwitch: Player entró al trigger. Cambiando a Top-Down. Top-Down Virtual Camera active: {topDownVirtualCamera.activeSelf}.");
+                }
+                else
+                {
+                    Debug.LogWarning("CamSwitch: No se pudo activar la cámara Top-Down porque 'Top Down Virtual Camera' es nulo.");
                 }
 
-                // Iniciar seguimiento de enemigos
+                // Lógica de enemigos, música, etc., si pertenece aquí.
                 foreach (var enemy in enemies)
                 {
-                    if (enemy != null)
-                    {
-                        enemy.StartFollowing();
-                    }
+                    if (enemy != null) { enemy.StartFollowing(); }
                 }
             }
-            // Si el trigger es para toggle (cambiar de ida y vuelta), esta es la lógica alternativa:
-            // else {
-            //     ResetToFPS(); // Si ya está en Top-Down, vuelve a FPS
-            // }
         }
     }
 
     public void ResetToFPS()
     {
-        // Siempre asegura que la cámara FPS estándar está activa
-        fpsCamera.SetActive(true);
-        // Siempre asegura que la Cinemachine Virtual Camera está inactiva
-        topDownCamObject.SetActive(false);
-        isTopDownActive = false; // Actualiza el estado a FPS
-
-        Debug.Log($"CamSwitch: ResetToFPS llamado. Cámara FPS activa: {fpsCamera.activeSelf}, Top-Down Cam activa: {topDownCamObject.activeSelf}.");
-
-        // Opcional: Volver a la música normal del nivel
-        // if (MusicManagerScript.instance != null)
-        // {
-        //     MusicManagerScript.instance.PlayLevelMusic(); 
-        // }
+        // La Main Camera (con CinemachineBrain) debe permanecer activa.
+        // Para volver a FPS, simplemente desactiva la Cinemachine Virtual Camera.
+        // CinemachineBrain detectará que no hay Virtual Cameras prioritarias y volverá a la vista de la Main Camera.
+        if (topDownVirtualCamera != null)
+        {
+            topDownVirtualCamera.SetActive(false); // Desactiva la Cinemachine Virtual Camera
+            isTopDownActive = false; // Actualiza el estado a FPS
+            Debug.Log($"CamSwitch: ResetToFPS llamado. Top-Down Virtual Camera desactivada. isTopDownActive: {isTopDownActive}.");
+        }
+        else
+        {
+            Debug.LogWarning("CamSwitch: No se pudo resetear a FPS porque 'Top Down Virtual Camera' es nulo.");
+        }
     }
 }
