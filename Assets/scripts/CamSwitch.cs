@@ -30,6 +30,12 @@ public class CamSwitch : MonoBehaviour
     public EnemySpawner enemySpawner;
     // ----------------------------------------
 
+    // --- NUEVA REFERENCIA AL GAMEOBJECT DEL TEXTO DE ENEMIGOS ---
+    [Header("UI y Contador de Enemigos")] // Encabezado para organizar en el Inspector
+    [Tooltip("El GameObject que contiene el TextMeshProUGUI del contador de enemigos. ¡Desactivar por defecto en el Inspector!")]
+    public GameObject enemyCountTextGameObject;
+    // --- FIN NUEVA REFERENCIA ---
+
     private void Awake()
     {
         if (mainCameraGameObject == null)
@@ -73,6 +79,12 @@ public class CamSwitch : MonoBehaviour
         {
             Debug.LogError("CamSwitch: No se encontró la instancia de MusicManagerScript. Asegúrate de que haya uno en la escena y que tenga su script y DontDestroyOnLoad.");
         }
+
+        // ¡Verificación importante para el GameObject del texto!
+        if (enemyCountTextGameObject == null)
+        {
+            Debug.LogError("CamSwitch: El GameObject del texto del contador de enemigos (enemyCountTextGameObject) NO está asignado en el Inspector. El texto no se mostrará.", this);
+        }
     }
 
     private void Start()
@@ -96,6 +108,17 @@ public class CamSwitch : MonoBehaviour
         }
         isTopDownActive = false;
         Debug.Log($"CamSwitch: Start. FPS (Main Camera) activa. Top-Down Virtual Camera inactiva. isTopDownActive: {isTopDownActive}.");
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        // --- Asegúrate de que el GameObject del texto esté DESACTIVADO al inicio ---
+        if (enemyCountTextGameObject != null)
+        {
+            enemyCountTextGameObject.SetActive(false);
+            Debug.Log("CamSwitch: El GameObject del contador de enemigos se ha desactivado al inicio.");
+        }
+        // --- FIN ---
     }
 
     void Update()
@@ -157,6 +180,14 @@ public class CamSwitch : MonoBehaviour
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
 
+                    // --- ACTIVAR EL GAMEOBJECT DEL TEXTO CUANDO EL JUGADOR PISA EL TRIGGER ---
+                    if (enemyCountTextGameObject != null)
+                    {
+                        enemyCountTextGameObject.SetActive(true);
+                        Debug.Log("CamSwitch: El GameObject del contador de enemigos se ha activado.");
+                    }
+                    // --- FIN ---
+
                     // Cambio de música
                     if (musicManager != null && musicManager.topDownMusicClip != null)
                     {
@@ -172,7 +203,7 @@ public class CamSwitch : MonoBehaviour
                         Debug.LogWarning("CamSwitch: topDownMusicClip no está asignado en MusicManager.");
                     }
 
-                    // ?? Activar el spawner de enemigos
+                    // Activar el spawner de enemigos
                     if (enemySpawner != null)
                     {
                         enemySpawner.StartSpawner();
@@ -182,19 +213,20 @@ public class CamSwitch : MonoBehaviour
                     {
                         Debug.LogWarning("CamSwitch: enemySpawner no asignado en el Inspector.");
                     }
+
+                    // Activar movimiento de enemigos si están asignados
+                    foreach (var enemy in enemies)
+                    {
+                        if (enemy != null)
+                        {
+                            // Asegurate de que exista este método en los enemigos (Navmesh en este caso)
+                            enemy.StartFollowing();
+                        }
+                    }
                 }
                 else
                 {
                     Debug.LogWarning("CamSwitch: No se pudo activar la cámara Top-Down porque 'Top Down Virtual Camera' es nulo.");
-                }
-
-                // Activar movimiento de enemigos si están asignados
-                foreach (var enemy in enemies)
-                {
-                    if (enemy != null)
-                    {
-                        enemy.StartFollowing(); // Asegurate de que exista este método en los enemigos
-                    }
                 }
             }
         }
@@ -218,6 +250,14 @@ public class CamSwitch : MonoBehaviour
             // ¡Importante! Volver a bloquear y ocultar el cursor para la vista FPS
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            // --- DESACTIVAR EL GAMEOBJECT DEL TEXTO CUANDO SE VUELVE A FPS ---
+            if (enemyCountTextGameObject != null)
+            {
+                enemyCountTextGameObject.SetActive(false);
+                Debug.Log("CamSwitch: El GameObject del contador de enemigos se ha desactivado.");
+            }
+            // --- FIN ---
 
             // --- VOLVER A LA MÚSICA ORIGINAL DEL NIVEL ---
             if (musicManager != null && musicManager.GetCurrentLevelMusicClip() != null)

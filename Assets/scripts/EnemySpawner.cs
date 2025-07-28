@@ -1,85 +1,78 @@
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    public List<GameObject> enemyPrefabs;
+    public GameObject enemyPrefab;
     public Transform[] spawnPoints;
-    public float spawnInterval = 3f;
+    public float spawnRate = 5f;
+    public int numberOfEnemiesToSpawn = 14; // <--- ¡Asegúrate que este valor sea 14 en el Inspector!
+    private int enemiesSpawned = 0; // Contador de enemigos generados por ESTE spawner
 
-    private float timer;
-    private bool canSpawn = false;
+    private float nextSpawnTime;
+    private bool spawnerActive = false; // Controla si el spawner está activo
 
-    public int enemiesLeft;
-    public TMPro.TextMeshProUGUI enemiesLeftText;
+    private GameManager gameManager;
 
-    void Update()
+    void Awake()
     {
-        if (!canSpawn) return;
-
-        timer += Time.deltaTime;
-        if (timer >= spawnInterval)
+        gameManager = FindAnyObjectByType<GameManager>();
+        if (gameManager == null)
         {
-            SpawnEnemies();
-            timer = 0f;
+            Debug.LogError("[EnemySpawner] No se encontró un GameManager en la escena. El conteo de enemigos no funcionará.");
         }
     }
 
-    void SpawnEnemies()
+    void Update()
     {
-        Debug.Log("SpawnEnemies fue llamado!");
-        if (enemyPrefabs.Count == 0 || spawnPoints.Length < 2) return;
-
-        int index1 = Random.Range(0, spawnPoints.Length);
-        List<Transform> availablePoints = new List<Transform>(spawnPoints);
-        Transform spawnPoint1 = availablePoints[index1];
-
-        availablePoints.RemoveAt(index1);
-        int index2 = Random.Range(0, availablePoints.Count);
-        Transform spawnPoint2 = availablePoints[index2];
-
-        int enemy1 = Random.Range(0, enemyPrefabs.Count);
-        int enemy2 = Random.Range(0, enemyPrefabs.Count);
-
-        // --- Instanciaci�n ---
-        GameObject e1 = Instantiate(enemyPrefabs[enemy1], spawnPoint1.position, Quaternion.identity);
-        GameObject e2 = Instantiate(enemyPrefabs[enemy2], spawnPoint2.position, Quaternion.identity);
-
-        // --- Registrar enemigos en el contador ---
-        RegisterEnemy();
-        RegisterEnemy();
+        // PRIMERA CONDICIÓN: Si el spawner está activo Y NO ha generado todos los enemigos Y es tiempo de spawnear
+        if (spawnerActive && enemiesSpawned < numberOfEnemiesToSpawn && Time.time >= nextSpawnTime)
+        {
+            SpawnEnemy();
+            nextSpawnTime = Time.time + spawnRate;
+        }
+        // SEGUNDA CONDICIÓN: Si el spawner está activo Y YA ha generado todos los enemigos
+        else if (spawnerActive && enemiesSpawned >= numberOfEnemiesToSpawn)
+        {
+            StopSpawner(); // Detiene el spawner para que no genere más
+        }
     }
-
 
     public void StartSpawner()
     {
-        canSpawn = true;
+        // Reinicia el contador de enemigos generados por este spawner al inicio
+        enemiesSpawned = 0;
+        spawnerActive = true;
+        nextSpawnTime = Time.time + spawnRate;
+        Debug.Log("[EnemySpawner] Spawner activado y listo para generar " + numberOfEnemiesToSpawn + " enemigos.");
+
+        // ¡IMPORTANTE! Notifica al GameManager el número TOTAL de enemigos que este spawner generará.
+        if (gameManager != null)
+        {
+            gameManager.SetSpawnerEnemyCount(numberOfEnemiesToSpawn); // Le dice al GM que va a generar 14.
+        }
     }
 
     public void StopSpawner()
     {
-        canSpawn = false;
-    }
-    public void RegisterEnemy()
-    {
-        enemiesLeft++;
-        UpdateUI();
+        spawnerActive = false; // Esto es CRÍTICO: Desactiva la bandera para que Update() no siga spawneando
+        Debug.Log("[EnemySpawner] Spawner detenido. Se generaron " + enemiesSpawned + " de " + numberOfEnemiesToSpawn + " enemigos.");
     }
 
-    public void UnregisterEnemy()
+    void SpawnEnemy()
     {
-        enemiesLeft--;
-        UpdateUI();
-        if (enemiesLeft <= 0)
+        if (enemyPrefab == null || spawnPoints == null || spawnPoints.Length == 0)
         {
-            StopSpawner();
-            Debug.Log("EnemySpawner: Todos los enemigos eliminados.");
+            Debug.LogError("[EnemySpawner] Configuración de spawner incompleta. Asegura que 'enemyPrefab' y 'spawnPoints' estén asignados.");
+            return;
         }
-    }
 
-    private void UpdateUI()
-    {
-        if (enemiesLeftText != null)
-            enemiesLeftText.text = "Enemies Left: " + enemiesLeft;
+        int randomIndex = Random.Range(0, spawnPoints.Length);
+        Transform spawnPoint = spawnPoints[randomIndex];
+
+        GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+        enemiesSpawned++; // Incrementa el contador de enemigos que ESTE spawner ha generado
+        Debug.Log($"[EnemySpawner] Enemigo '{newEnemy.name}' spawneado en {spawnPoint.position}. Enemigos generados por este spawner: {enemiesSpawned}/{numberOfEnemiesToSpawn}.");
+
+        // No necesitas llamar a RegisterSpawnedEnemy() aquí. El GameManager ya sumó los 14 cuando se llamó a SetSpawnerEnemyCount.
     }
 }

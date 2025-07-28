@@ -1,3 +1,4 @@
+// En Navmesh.cs
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -6,11 +7,33 @@ public class Navmesh : MonoBehaviour
     public Transform player;
     private NavMeshAgent agent;
 
-    private bool canFollow = false; 
+    private bool canFollow = false;
 
     private void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+
+        if (player == null)
+        {
+            GameObject playerObject = GameObject.FindWithTag("Player");
+            if (playerObject != null)
+            {
+                player = playerObject.transform;
+            }
+            else
+            {
+                Debug.LogWarning($"Navmesh ({gameObject.name}): No se encontró el GameObject con la etiqueta 'Player'. Asegúrate de que tu jugador tenga esa etiqueta.", this);
+            }
+        }
+
+        // --- NUEVO: Auto-activar seguimiento si la cámara ya está en Top-Down ---
+        // Asumiendo que CamSwitch está en un GameObject en la escena.
+        CamSwitch camSwitch = FindAnyObjectByType<CamSwitch>();
+        if (camSwitch != null && camSwitch.IsTopDownActive())
+        {
+            StartFollowing();
+        }
+        // -----------------------------------------------------------------------
     }
 
     private void Update()
@@ -20,9 +43,9 @@ public class Navmesh : MonoBehaviour
             agent.destination = player.position;
         }
     }
+
     public void StartFollowing()
     {
         canFollow = true;
     }
 }
-

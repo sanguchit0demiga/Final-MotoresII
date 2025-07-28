@@ -132,11 +132,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bce15a03054fa2641998e2a8e9dbbad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathParticles: {fileID: 0}
   player: {fileID: 0}
+  deathParticles: {fileID: 8021040539275587455, guid: 4568594f94bfcb54babcbe5c46964763, type: 3}
   detectionRange: 15
   moveSpeed: 2
   health: 50
+  possibleDrops:
+  - {fileID: 6139130025224895718, guid: e2cdc535d66624a44bd4f3d887f01163, type: 3}
+  - {fileID: 7204978441393815372, guid: 2463755947ba88e479301f9ca6188a3d, type: 3}
+  - {fileID: 5315192156743601496, guid: ebe3a2c549f45884abc6f715f714b652, type: 3}
+  dropChance: 0.3
 --- !u!65 &1339135192215860605
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bce5ac2e8cf95e47885bf2398f3f8a4, type: 3}
   m_Name: DropTable
   m_EditorClassIdentifier: 
-  possibleDrops: []
+  possibleDrops:
+  - {fileID: 11400000, guid: b49172d6017914b43adaaaed8e69c22f, type: 2}
+  - {fileID: 11400000, guid: 4d134346a3e2c7d44a71828b9b28d67c, type: 2}
+  - {fileID: 11400000, guid: ba8eb67141c2cd34ab513e893d3dfb20, type: 2}

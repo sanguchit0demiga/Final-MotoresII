@@ -222,10 +222,10 @@ NavMeshAgent:
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
-  m_StoppingDistance: 0
+  m_StoppingDistance: 1.04
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
-  m_AutoRepath: 1
+  m_AutoRepath: 0
   m_Height: 2
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
@@ -250,16 +250,21 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7978624443179368204}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bce15a03054fa2641998e2a8e9dbbad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathParticles: {fileID: 0}
   player: {fileID: 0}
+  deathParticles: {fileID: 8021040539275587455, guid: 4568594f94bfcb54babcbe5c46964763, type: 3}
   detectionRange: 15
   moveSpeed: 1
   health: 50
+  possibleDrops:
+  - {fileID: 6139130025224895718, guid: e2cdc535d66624a44bd4f3d887f01163, type: 3}
+  - {fileID: 7204978441393815372, guid: 2463755947ba88e479301f9ca6188a3d, type: 3}
+  - {fileID: 5315192156743601496, guid: ebe3a2c549f45884abc6f715f714b652, type: 3}
+  dropChance: 0.3
 --- !u!65 &6833648554304727159
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -293,15 +298,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c642f78b03f384641a906f909ddec9f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathParticles: {fileID: 0}
-  player: {fileID: 0}
-  detectionRange: 15
+  player: {fileID: 4525164559173990875, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
+  deathParticles: {fileID: 8021040539275587455, guid: 4568594f94bfcb54babcbe5c46964763, type: 3}
+  detectionRange: 5.9
   moveSpeed: 1
   health: 3
+  possibleDrops: []
+  dropChance: 0.3
   bulletPrefab: {fileID: 9200986142719990990, guid: ee146f227db50b544acf5095a7b87db3, type: 3}
   firePoint: {fileID: 5590672321190411566}
   fireRate: 1
-  bulletForce: 20
+  bulletForce: 32.9
 --- !u!114 &1244460563390469702
 MonoBehaviour:
   m_ObjectHideFlags: 0
