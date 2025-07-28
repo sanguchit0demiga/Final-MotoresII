@@ -26,6 +26,8 @@ public class CamSwitch : MonoBehaviour
 
     // --- NUEVA REFERENCIA AL MUSICMANAGER ---
     private MusicManagerScript musicManager;
+
+    public EnemySpawner enemySpawner;
     // ----------------------------------------
 
     private void Awake()
@@ -144,19 +146,18 @@ public class CamSwitch : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            // Cambiar a Top-Down solo si no estamos ya en Top-Down
             if (!isTopDownActive)
             {
                 if (topDownVirtualCamera != null)
                 {
-                    topDownVirtualCamera.gameObject.SetActive(true); // Activa la Cinemachine Virtual Camera
+                    topDownVirtualCamera.gameObject.SetActive(true);
                     isTopDownActive = true;
                     Debug.Log($"CamSwitch: Player entró al trigger. Cambiando a Top-Down. Top-Down Virtual Camera active: {topDownVirtualCamera.gameObject.activeSelf}.");
 
-                    Cursor.lockState = CursorLockMode.None; // Liberar el cursor para moverlo
-                    Cursor.visible = true; // Hacerlo visible si es necesario para un puntero custom, o dejarlo oculto para una "mira".
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
 
-                    // --- CAMBIO DE MÚSICA AL ENTRAR AL TRIGGER ---
+                    // Cambio de música
                     if (musicManager != null && musicManager.topDownMusicClip != null)
                     {
                         musicManager.SetMusicClipAndPlay(musicManager.topDownMusicClip);
@@ -168,22 +169,37 @@ public class CamSwitch : MonoBehaviour
                     }
                     else if (musicManager.topDownMusicClip == null)
                     {
-                        Debug.LogWarning("CamSwitch: topDownMusicClip no está asignado en MusicManager, no se pudo cambiar la música.");
+                        Debug.LogWarning("CamSwitch: topDownMusicClip no está asignado en MusicManager.");
                     }
-                    // ---------------------------------------------
+
+                    // ?? Activar el spawner de enemigos
+                    if (enemySpawner != null)
+                    {
+                        enemySpawner.StartSpawner();
+                        Debug.Log("CamSwitch: EnemySpawner activado.");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("CamSwitch: enemySpawner no asignado en el Inspector.");
+                    }
                 }
                 else
                 {
                     Debug.LogWarning("CamSwitch: No se pudo activar la cámara Top-Down porque 'Top Down Virtual Camera' es nulo.");
                 }
 
+                // Activar movimiento de enemigos si están asignados
                 foreach (var enemy in enemies)
                 {
-                    if (enemy != null) { enemy.StartFollowing(); } // Asegúrate de que los enemigos tengan el método StartFollowing()
+                    if (enemy != null)
+                    {
+                        enemy.StartFollowing(); // Asegurate de que exista este método en los enemigos
+                    }
                 }
             }
         }
     }
+
 
     // ELIMINADO: OnTriggerExit para que la cámara y música Top-Down persistan.
     // El cambio de vuelta a FPS y la música original ahora solo ocurrirá al llamar a ResetToFPS().

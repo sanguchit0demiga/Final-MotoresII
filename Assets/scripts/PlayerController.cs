@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI; // Necesario para Text
-using UnityEngine.SceneManagement; // Necesario para cambiar de escena
-using System.Collections; // ¡MUY IMPORTANTE: Necesario para Coroutines!
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
+    // --- Variables de Movimiento y WallRun ---
     public float moveSpeed = 6f;
     public float gravity = 20f;
     public float jumpForce = 8f;
@@ -18,137 +19,89 @@ public class PlayerController : MonoBehaviour
     private Vector2 input;
     private float verticalVelocity;
     private bool isJumping = false;
-
     private bool isWallRunning = false;
     private bool wallLeft, wallRight;
-
-    public Transform orientation; // Este es para la vista FPS.
-    public LayerMask wallLayer;
-
     private Vector3 wallNormal;
     private Vector3 wallJumpHorizontalVelocity = Vector3.zero;
 
+    // --- FPS / Cámara / Layer ---
+    public Transform orientation;
+    public LayerMask wallLayer;
+    public LayerMask groundLayer;
+    public CamSwitch camSwitcher;
+    public CameraMovement playerCameraMovement;
+    private Transform fpsCameraTransform;
+
+    // --- Salud ---
     public float maxHealth = 100f;
     public float currentHealth;
+    public HealthBarUI healthBarUI;
     private Vector3 posicionInicial;
 
+    // --- Arma y Disparo ---
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletForce = 20f;
     public float fireRate = 0.2f;
     private float nextFireTime = 0f;
     public ParticleSystem muzzleFlash;
+    public float normalBulletDamage = 10f;
+    public float boostedBulletDamage = 20f;
+    private bool damageBoosted = false;
 
-    public CamSwitch camSwitcher;
-    public CameraMovement playerCameraMovement;
-
-    public int ammo = 25;
-    public int maxAmmo = 25; // Asumo que este es el que quieres para la munición máxima
-    public Text ammoDisplay;
-
+    // --- Audio ---
     public AudioSource gunShotAudio;
     public AudioSource reloadAudio;
     public AudioSource footstepAudio;
     public AudioSource jumpAudio;
+    public AudioSource deathAudioSource;
+    public AudioClip deathSoundClip;
+    public float delayBeforeDefeatScene = 0.5f;
+
+    // --- UI ---
+    public int ammo = 25;
+    public int maxAmmo = 25;
+    public Text ammoDisplay;
+    public string gameOverSceneName = "Defeat";
+
+    // --- Estado ---
+    private bool isDead = false;
+    public bool isInvincible = false;
+    public Renderer playerRenderer;
+    private Color originalColor;
+    public GameObject playerWeapon;
+    private bool wasTopDownMode = false;
 
     private Vector2 mouseScreenPosition;
     private Vector3 lookTarget;
-    public LayerMask groundLayer;
 
-    public HealthBarUI healthBarUI;
-    public string gameOverSceneName = "GameOverScene";
-
-    // --- Variables de Audio de Muerte ---
-    public AudioSource deathAudioSource; // AudioSource para el sonido de muerte
-    public AudioClip deathSoundClip;     // El clip de audio del sonido de muerte
-    public float delayBeforeDefeatScene = 0.5f; // <<<<<< ¡IMPORTANTE: Agregamos esta variable de nuevo!
-    // -------------------------------------
-
-    // --- Variables para el manejo del arma ---
-    public GameObject playerWeapon;
-    private Transform fpsCameraTransform;
-    private bool wasTopDownMode = false;
-    private bool isDead = false;
-
-    // ------------------------------------------
+    public PowerUpUI powerUpUI;
 
     void Awake()
     {
         controller = GetComponent<CharacterController>();
+        fpsCameraTransform = Camera.main?.transform;
+        originalColor = playerRenderer.material.color;
 
-        if (camSwitcher == null)
-        {
-            // Preferir FindObjectOfType para obtener la primera instancia si solo hay una
-            camSwitcher = FindAnyObjectByType<CamSwitch>();
-            if (camSwitcher == null)
-            {
-                Debug.LogError("PlayerController: No se encontró un CamSwitch en la escena. El reseteo de cámara en muerte podría fallar.");
-            }
-        }
-
-        if (playerCameraMovement == null)
-        {
-            if (Camera.main != null)
-            {
-                playerCameraMovement = Camera.main.GetComponent<CameraMovement>();
-            }
-            if (playerCameraMovement == null)
-            {
-                Debug.LogError("PlayerController: No se encontró el script 'CameraMovement' en la Main Camera. Asegúrate de que esté adjunto a tu Main Camera GameObject.");
-            }
-        }
-
-        if (healthBarUI == null)
-        {
-            // Preferir FindObjectOfType para obtener la primera instancia si solo hay una
-            healthBarUI = FindAnyObjectByType<HealthBarUI>();
-            if (healthBarUI == null)
-            {
-                Debug.LogWarning("PlayerController: No se encontró un HealthBarUI en la escena. La barra de vida de la UI no se actualizará.");
-            }
-        }
-
-        if (Camera.main != null)
-        {
-            fpsCameraTransform = Camera.main.transform;
-        }
-        else
-        {
-            Debug.LogError("PlayerController: No se encontró la Main Camera. El arma no podrá seguir la cámara FPS.");
-        }
-
-        // Opcional: Si deathAudioSource no se asigna, intenta obtenerlo del mismo GameObject
-        // Esto es útil si el AudioSource está en el mismo objeto que el PlayerController.
-        if (deathAudioSource == null)
-        {
-            deathAudioSource = GetComponent<AudioSource>();
-            if (deathAudioSource == null)
-            {
-                Debug.LogWarning("PlayerController: No se encontró un AudioSource para el sonido de muerte en este GameObject. Asigna uno en el Inspector o asegúrate de que esté adjunto al mismo GameObject.");
-            }
-        }
+        if (deathAudioSource == null) deathAudioSource = GetComponent<AudioSource>();
+        if (camSwitcher == null) camSwitcher = FindAnyObjectByType<CamSwitch>();
+        if (playerCameraMovement == null) playerCameraMovement = Camera.main?.GetComponent<CameraMovement>();
+        if (healthBarUI == null) healthBarUI = FindAnyObjectByType<HealthBarUI>();
     }
 
-    private void Start()
+    void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
         currentHealth = maxHealth;
         posicionInicial = transform.position;
         UpdateAmmoDisplay();
-
-        if (healthBarUI != null)
-        {
-            healthBarUI.SetMaxHealth(maxHealth);
-            healthBarUI.SetHealth(currentHealth);
-        }
+        healthBarUI?.SetMaxHealth(maxHealth);
+        healthBarUI?.SetHealth(currentHealth);
 
         if (playerWeapon != null && fpsCameraTransform != null)
         {
             playerWeapon.transform.SetParent(fpsCameraTransform);
-            // playerWeapon.transform.localPosition = new Vector3(0.5f, -0.4f, 0.8f);
-            // playerWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f); 
         }
 
         wasTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
@@ -157,8 +110,16 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         CheckForWalls();
-         if (isDead) return;
+        if (isDead) return;
 
+        HandleCameraSwitch();
+        HandleMovement();
+
+        if (Keyboard.current.rKey.wasPressedThisFrame) Reload();
+    }
+
+    private void HandleCameraSwitch()
+    {
         bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
 
         if (playerWeapon != null && camSwitcher != null)
@@ -166,35 +127,31 @@ public class PlayerController : MonoBehaviour
             if (isTopDownMode && !wasTopDownMode)
             {
                 playerWeapon.transform.SetParent(transform);
-                // playerWeapon.transform.localPosition = new Vector3(0.2f, 0.5f, 0f); 
-                // playerWeapon.transform.localRotation = Quaternion.identity; 
             }
             else if (!isTopDownMode && wasTopDownMode)
             {
-                if (fpsCameraTransform != null)
-                {
-                    playerWeapon.transform.SetParent(fpsCameraTransform);
-                    // playerWeapon.transform.localPosition = new Vector3(0.5f, -0.4f, 0.8f);
-                    // playerWeapon.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-                }
+                playerWeapon.transform.SetParent(fpsCameraTransform);
             }
         }
         wasTopDownMode = isTopDownMode;
+    }
 
+    private void HandleMovement()
+    {
         Vector3 move;
+        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
 
         if (!isTopDownMode)
         {
             move = orientation.forward * input.y + orientation.right * input.x;
-            move *= moveSpeed;
         }
         else
         {
-            move = new Vector3(input.x, 0f, input.y).normalized * moveSpeed;
-
+            move = new Vector3(input.x, 0f, input.y).normalized;
             lookTarget.y = transform.position.y;
             transform.LookAt(lookTarget);
         }
+        move *= moveSpeed;
 
         if (controller.isGrounded)
         {
@@ -211,206 +168,66 @@ public class PlayerController : MonoBehaviour
             verticalVelocity -= (isWallRunning ? wallRunGravity : gravity) * Time.deltaTime;
         }
 
-        if (wallJumpHorizontalVelocity.magnitude > 0.1f)
-        {
-            move += wallJumpHorizontalVelocity;
-            wallJumpHorizontalVelocity = Vector3.Lerp(wallJumpHorizontalVelocity, Vector3.zero, 10f * Time.deltaTime);
-        }
-
         isWallRunning = !isTopDownMode && (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
-
         if (isWallRunning)
         {
-            Vector3 wallRunDirection = Vector3.Cross(wallNormal, Vector3.up);
-            if (Mathf.Sign(input.y) * Vector3.Dot(wallRunDirection, orientation.forward) < 0)
-                wallRunDirection = -wallRunDirection;
-
-            Vector3 wallRunMove = wallRunDirection * wallRunSpeed;
-            wallRunMove.y = verticalVelocity;
-
-            Vector3 finalMove = wallRunMove + move * 0.5f;
+            Vector3 wallRunDir = Vector3.Cross(wallNormal, Vector3.up);
+            if (Mathf.Sign(input.y) * Vector3.Dot(wallRunDir, orientation.forward) < 0) wallRunDir = -wallRunDir;
+            Vector3 finalMove = (wallRunDir * wallRunSpeed + move * 0.5f);
+            finalMove.y = verticalVelocity;
             controller.Move(finalMove * Time.deltaTime);
         }
         else
         {
             move.y = verticalVelocity;
+            if (wallJumpHorizontalVelocity.magnitude > 0.1f)
+            {
+                move += wallJumpHorizontalVelocity;
+                wallJumpHorizontalVelocity = Vector3.Lerp(wallJumpHorizontalVelocity, Vector3.zero, 10f * Time.deltaTime);
+            }
             controller.Move(move * Time.deltaTime);
         }
-
-        if (Keyboard.current.rKey.wasPressedThisFrame)
-        {
-            Reload();
-        }
     }
-
 
     void CheckForWalls()
     {
-        if (camSwitcher == null || !camSwitcher.IsTopDownActive())
-        {
-            RaycastHit hit;
+        if (camSwitcher != null && camSwitcher.IsTopDownActive()) { wallLeft = wallRight = false; return; }
 
-            wallRight = Physics.Raycast(transform.position, orientation.right, out hit, wallCheckDistance, wallLayer);
-            if (wallRight) wallNormal = hit.normal;
-
-            wallLeft = Physics.Raycast(transform.position, -orientation.right, out hit, wallCheckDistance, wallLayer);
-            if (wallLeft) wallNormal = hit.normal;
-        }
-        else
-        {
-            wallLeft = false;
-            wallRight = false;
-        }
+        RaycastHit hit;
+        wallRight = Physics.Raycast(transform.position, orientation.right, out hit, wallCheckDistance, wallLayer);
+        if (wallRight) wallNormal = hit.normal;
+        wallLeft = Physics.Raycast(transform.position, -orientation.right, out hit, wallCheckDistance, wallLayer);
+        if (wallLeft) wallNormal = hit.normal;
     }
 
-    public void OnMove(InputAction.CallbackContext ctx)
-    {
-        input = ctx.ReadValue<Vector2>();
-    }
+    public void OnMove(InputAction.CallbackContext ctx) => input = ctx.ReadValue<Vector2>();
 
     public void OnJump(InputAction.CallbackContext ctx)
     {
-        if (camSwitcher == null || !camSwitcher.IsTopDownActive())
-        {
-            if (ctx.started)
-            {
-                if (controller.isGrounded)
-                {
-                    isJumping = true;
-                    if (jumpAudio != null)
-                        jumpAudio.Play();
-                }
-                else if (isWallRunning)
-                {
-                    verticalVelocity = jumpForce;
-                    Vector3 wallJumpDir = (wallNormal + Vector3.up).normalized;
-                    wallJumpHorizontalVelocity = wallJumpDir * wallJumpForce;
-
-                    isWallRunning = false;
-                    if (jumpAudio != null)
-                        jumpAudio.Play();
-                }
-            }
-        }
-        else if (ctx.started && controller.isGrounded)
+        if (!ctx.started) return;
+        if ((camSwitcher == null || !camSwitcher.IsTopDownActive()) && (controller.isGrounded || isWallRunning))
         {
             verticalVelocity = jumpForce;
-            if (jumpAudio != null)
-                jumpAudio.Play();
+            isJumping = controller.isGrounded;
+            if (isWallRunning) wallJumpHorizontalVelocity = (wallNormal + Vector3.up).normalized * wallJumpForce;
+            jumpAudio?.Play();
         }
     }
 
-    public void OnMouseLook(InputAction.CallbackContext context)
+    public void OnMouseLook(InputAction.CallbackContext ctx)
     {
         if (camSwitcher != null && camSwitcher.IsTopDownActive())
         {
-            mouseScreenPosition = context.ReadValue<Vector2>();
-
+            mouseScreenPosition = ctx.ReadValue<Vector2>();
             Ray ray = Camera.main.ScreenPointToRay(mouseScreenPosition);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, Mathf.Infinity, groundLayer))
-            {
+            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayer))
                 lookTarget = hit.point;
-            }
-            else
-            {
-                Debug.LogWarning("PlayerController: Raycast del mouse no golpeó la groundLayer. Asegúrate de que el suelo tenga un collider y la capa 'Ground'.");
-            }
         }
-        else
+        else if (playerCameraMovement != null && ctx.phase == InputActionPhase.Performed)
         {
-            if (playerCameraMovement != null && context.phase == InputActionPhase.Performed)
-            {
-                playerCameraMovement.ReceiveMouseInput(context.ReadValue<Vector2>());
-            }
+            playerCameraMovement.ReceiveMouseInput(ctx.ReadValue<Vector2>());
         }
     }
-
-    public void TakeDamage(float damageAmount)
-    {
-        currentHealth -= damageAmount;
-        currentHealth = Mathf.Max(currentHealth, 0);
-        Debug.Log("vida actual: " + currentHealth);
-
-        if (healthBarUI != null)
-        {
-            healthBarUI.SetHealth(currentHealth);
-        }
-
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
-    }
-
-    public void Die()
-    {
-        if (isDead) return;
-
-        isDead = true;
-        controller.enabled = false;
-
-       
-        if (MusicManagerScript.instance != null)
-        {
-            MusicManagerScript.instance.StopMusic();
-        }
-
-        if (deathAudioSource != null && deathSoundClip != null)
-        {
-            deathAudioSource.PlayOneShot(deathSoundClip);
-            StartCoroutine(LoadDefeatSceneAfterDelay(delayBeforeDefeatScene));
-        }
-        else
-        {
-            LoadDefeatScene();
-        }
-    }
-
-    // --- Corrutina para esperar antes de cargar la escena ---
-    IEnumerator LoadDefeatSceneAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        // Espera adicional si el audio sigue sonando
-        while (deathAudioSource != null && deathAudioSource.isPlaying)
-        {
-            yield return null; // Espera al siguiente frame
-        }
-
-        SceneManager.LoadScene("Defeat");
-    }
-
-    // --- Método para cargar la escena de derrota (centralizado) ---
-    private void LoadDefeatScene()
-    {
-        if (camSwitcher != null)
-        {
-            camSwitcher.ResetToFPS();
-            Debug.Log("PlayerController: Reseteando cámara a FPS a través de CamSwitch.");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerController: camSwitcher es nulo. No se pudo resetear la cámara a FPS.");
-        }
-
-        if (playerCameraMovement != null)
-        {
-            playerCameraMovement.RecenterCamera();
-            Debug.Log("PlayerController: Recentrando la cámara FPS después de reaparecer.");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerController: playerCameraMovement es nulo. No se pudo recentrar la cámara FPS.");
-        }
-
-        Debug.Log("PlayerController: ¡El jugador ha muerto! Cargando escena de derrota...");
-
-        // Cargar directamente la escena "Defeat"
-        SceneManager.LoadScene("Defeat");
-    }
-    // ---------------------------------------------------------------
 
     public void OnFire(InputAction.CallbackContext ctx)
     {
@@ -423,59 +240,35 @@ public class PlayerController : MonoBehaviour
 
     private void Shoot()
     {
-        if (ammo <= 0)
-        {
-            Debug.Log("Sin munición");
-            return;
-        }
+        if (ammo <= 0) return;
 
-        if (muzzleFlash != null)
-        {
-            muzzleFlash.Play();
-        }
-        if (gunShotAudio != null)
-        {
-            gunShotAudio.Play();
-        }
+        muzzleFlash?.Play();
+        gunShotAudio?.Play();
 
-        Vector3 shootDirection;
-        Quaternion bulletRotation;
+        Vector3 dir = (camSwitcher != null && camSwitcher.IsTopDownActive()) ? transform.forward : Camera.main.transform.forward;
+        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
 
-        bool isTopDownMode = camSwitcher != null && camSwitcher.IsTopDownActive();
-
-        if (isTopDownMode)
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        if (bulletScript != null)
         {
-            shootDirection = transform.forward;
-            shootDirection.y = 0;
-            shootDirection.Normalize();
-            bulletRotation = Quaternion.LookRotation(shootDirection);
+            float damage = damageBoosted ? boostedBulletDamage : normalBulletDamage;
+            bulletScript.SetDamage(damage);
         }
-        else
-        {
-            shootDirection = Camera.main.transform.forward;
-            bulletRotation = Camera.main.transform.rotation;
-        }
-
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, bulletRotation);
 
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.AddForce(shootDirection * bulletForce, ForceMode.Impulse);
-        }
+        rb?.AddForce(dir * bulletForce, ForceMode.Impulse);
 
         Destroy(bullet, 4f);
         ammo--;
         UpdateAmmoDisplay();
     }
 
-    private void OnCollisionEnter(Collision collision)
+
+    private void Reload()
     {
-        if (collision.gameObject.CompareTag("BulletEnemy"))
-        {
-            TakeDamage(25f);
-            Destroy(collision.gameObject);
-        }
+        reloadAudio?.Play();
+        ammo = maxAmmo;
+        UpdateAmmoDisplay();
     }
 
     private void UpdateAmmoDisplay()
@@ -486,15 +279,94 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Reload()
+    private void OnCollisionEnter(Collision collision)
     {
-        if (reloadAudio != null)
+        if (collision.gameObject.CompareTag("BulletEnemy"))
         {
-            reloadAudio.Play();
+            if (!isInvincible)
+            {
+                TakeDamage(25f);
+            }
+            Destroy(collision.gameObject);
         }
+    }
 
-        ammo = maxAmmo; // Usar maxAmmo
-        UpdateAmmoDisplay();
-        Debug.Log("Recargado");
+    public void TakeDamage(float damageAmount)
+    {
+        currentHealth -= damageAmount;
+        currentHealth = Mathf.Max(currentHealth, 0);
+        healthBarUI?.SetHealth(currentHealth);
+        if (currentHealth <= 0) Die();
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+        controller.enabled = false;
+        MusicManagerScript.instance?.StopMusic();
+
+        if (deathAudioSource != null && deathSoundClip != null)
+        {
+            deathAudioSource.PlayOneShot(deathSoundClip);
+            StartCoroutine(LoadDefeatSceneAfterDelay(delayBeforeDefeatScene));
+        }
+        else
+        {
+            LoadDefeatScene();
+        }
+    }
+
+    private IEnumerator LoadDefeatSceneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        while (deathAudioSource != null && deathAudioSource.isPlaying) yield return null;
+        LoadDefeatScene();
+    }
+
+    private void LoadDefeatScene()
+    {
+        camSwitcher?.ResetToFPS();
+        playerCameraMovement?.RecenterCamera();
+        SceneManager.LoadScene("Defeat");
+    }
+
+    public void Heal(float amount)
+    {
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+        healthBarUI?.SetHealth(currentHealth);
+    }
+
+    public void ActivateInvincibility(float duration)
+    {
+        StartCoroutine(InvincibilityCoroutine(duration));
+
+        if (powerUpUI != null)
+            powerUpUI.ShowPowerUp(powerUpUI.invincibilityOverlay, powerUpUI.invincibilityUI, duration);
+    }
+
+
+    private IEnumerator InvincibilityCoroutine(float duration)
+    {
+        isInvincible = true;
+        playerRenderer.material.color = Color.blue;
+        yield return new WaitForSeconds(duration);
+        isInvincible = false;
+        playerRenderer.material.color = originalColor;
+    }
+
+    public void ActivateDamageBoost(float duration)
+    {
+        StartCoroutine(DamageBoostCoroutine(duration));
+
+        if (powerUpUI != null)
+            powerUpUI.ShowPowerUp(powerUpUI.damageOverlay, powerUpUI.damageUI, duration);
+    }
+    private IEnumerator DamageBoostCoroutine(float duration)
+    {
+        damageBoosted = true;
+        yield return new WaitForSeconds(duration);
+        damageBoosted = false;
     }
 }

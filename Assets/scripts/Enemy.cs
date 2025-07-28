@@ -7,12 +7,12 @@ public class Enemy : MonoBehaviour
     public Transform player;
     public float detectionRange = 15f;
     public float moveSpeed = 5f;
-
-    public int health = 3;
+    private EnemySpawner spawner;
+    public int health = 50;
    
     void Start()
     {
-       
+        spawner = FindAnyObjectByType<EnemySpawner>();
 
     }
 
@@ -29,15 +29,7 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Bullet"))
-        {
-            TakeDamage(1);
-            Destroy(collision.gameObject);
-        }
-    }
-
+ 
     public virtual void TakeDamage(int damage)
     {
         health -= damage;
@@ -49,11 +41,14 @@ public class Enemy : MonoBehaviour
 
     void Die()
         {
-            
-            Destroy(gameObject);
-            Instantiate(deathParticles, transform.position, Quaternion.identity);
+        spawner?.UnregisterEnemy();
+        GetComponent<PowerUpDropper>()?.TryDropPowerUp();
 
-        }
+        Instantiate(deathParticles, transform.position, Quaternion.identity);
+
+        Destroy(gameObject);
+
+    }
 
     }
 
