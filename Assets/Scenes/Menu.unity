@@ -1901,6 +1901,7 @@ MonoBehaviour:
   level1MusicClip: {fileID: 8300000, guid: 35665736ab192d04497ee1434b81c0aa, type: 3}
   topDownMusicClip: {fileID: 8300000, guid: ae5b25b000a243548bccee2082f31ca6, type: 3}
   defeatMusicClip: {fileID: 8300000, guid: b89bc2d8bbf05424f9db40d3f850f928, type: 3}
+  victoryMusicClip: {fileID: 8300000, guid: b6f3565fa47a6294b83f367636cd5f19, type: 3}
 --- !u!1 &1789204877
 GameObject:
   m_ObjectHideFlags: 0

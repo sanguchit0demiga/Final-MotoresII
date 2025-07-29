@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement; // Necesario para SceneManager
 
 public class MusicManagerScript : MonoBehaviour
 {
-    // Una instancia estática para hacer el MusicManager accesible globalmente (Singleton pattern)
     public static MusicManagerScript instance;
 
     // Referencia al AudioSource que reproducirá la música
@@ -15,10 +14,11 @@ public class MusicManagerScript : MonoBehaviour
     public AudioMixerGroup musicMixerGroup;
 
     // Clips de audio para las diferentes escenas
-    public AudioClip menuMusicClip;          // Música para el menú principal y escenas relacionadas
-    public AudioClip level1MusicClip;        // Música para el nivel de juego principal
-    public AudioClip topDownMusicClip;       // Música específica para el modo Top-Down (si lo usas)
-    public AudioClip defeatMusicClip;        // ¡NUEVO! Música para la escena de derrota
+    public AudioClip menuMusicClip;           // Música para el menú principal y escenas relacionadas
+    public AudioClip level1MusicClip;         // Música para el nivel de juego principal
+    public AudioClip topDownMusicClip;        // Música específica para el modo Top-Down (si lo usas)
+    public AudioClip defeatMusicClip;         // ¡NUEVO! Música para la escena de derrota
+    public AudioClip victoryMusicClip;        // Música para la escena de victoria (si la tienes)
 
     void Awake()
     {
@@ -95,18 +95,31 @@ public class MusicManagerScript : MonoBehaviour
                 Debug.LogWarning("MusicManager: No se ha asignado un AudioClip para 'level1MusicClip' en el Inspector.");
             }
         }
-        else if (scene.name == "Defeat") // ¡NUEVA CONDICIÓN para la escena de derrota!
+        else if (scene.name == "Defeat")
         {
             nextClipToPlay = defeatMusicClip;
+            // For defeat and victory music, you might want them to play once and not loop
+            musicAudioSource.loop = false; // Set loop to false for defeat music
             if (defeatMusicClip == null)
             {
                 Debug.LogWarning("MusicManager: No se ha asignado un AudioClip para 'defeatMusicClip' en el Inspector de MusicManager.");
+            }
+        }
+        else if (scene.name == "Win") // ¡NUEVA CONDICIÓN para la escena de victoria!
+        {
+            nextClipToPlay = victoryMusicClip;
+            // For victory music, you might want it to play once and not loop
+            musicAudioSource.loop = false; // Set loop to false for victory music
+            if (victoryMusicClip == null)
+            {
+                Debug.LogWarning("MusicManager: No se ha asignado un AudioClip para 'victoryMusicClip' en el Inspector de MusicManager.");
             }
         }
         else if (scene.name == "Menu" || scene.name == "Options" || scene.name == "Audio" || scene.name == "SelectLevel" || scene.name == "Controls")
         {
             // Si es una escena de menú/opciones, reproduce la música del menú
             nextClipToPlay = menuMusicClip;
+            musicAudioSource.loop = true; // Ensure menu music loops
             if (menuMusicClip == null)
             {
                 Debug.LogWarning("MusicManager: No se ha asignado un AudioClip para 'menuMusicClip' en el Inspector.");
@@ -129,9 +142,9 @@ public class MusicManagerScript : MonoBehaviour
             // Si el clip actual es diferente al que se va a reproducir, o no hay nada sonando
             if (musicAudioSource.clip != nextClipToPlay)
             {
-                musicAudioSource.Stop();       // Detiene la reproducción actual
+                musicAudioSource.Stop();                // Detiene la reproducción actual
                 musicAudioSource.clip = nextClipToPlay; // Asigna el nuevo clip
-                musicAudioSource.Play();       // Comienza a reproducir el nuevo clip
+                musicAudioSource.Play();                // Comienza a reproducir el nuevo clip
                 Debug.Log($"MusicManager: Cambiando música a: {nextClipToPlay.name}.");
             }
             else if (!musicAudioSource.isPlaying)
