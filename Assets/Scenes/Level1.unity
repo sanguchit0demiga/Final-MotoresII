@@ -101184,7 +101184,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4525164559173990875, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 10.1
+      value: 7.43
       objectReference: {fileID: 0}
     - target: {fileID: 4525164559173990875, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
       propertyPath: m_LocalPosition.z
@@ -101217,6 +101217,14 @@ PrefabInstance:
     - target: {fileID: 4525164559173990875, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5833956032611374323, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.054
+      objectReference: {fileID: 0}
+    - target: {fileID: 7506570273722557345, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7794853092957816289, guid: 874a4dd9fe76ba441b7830866bb15c83, type: 3}
       propertyPath: m_ActionEvents.Array.data[2].m_PersistentCalls.m_Calls.Array.size

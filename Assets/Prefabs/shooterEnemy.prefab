@@ -200,6 +200,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6beee696c2c01a044ad59fc616034e1c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2076431935676971892}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6beee696c2c01a044ad59fc616034e1c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5748321282499464299}
   m_SourcePrefab: {fileID: 100100000, guid: 6beee696c2c01a044ad59fc616034e1c, type: 3}
 --- !u!4 &7345955949762586038 stripped
 Transform:
@@ -268,8 +271,6 @@ MonoBehaviour:
   - {fileID: 7204978441393815372, guid: 2463755947ba88e479301f9ca6188a3d, type: 3}
   - {fileID: 5315192156743601496, guid: ebe3a2c549f45884abc6f715f714b652, type: 3}
   dropChance: 0.3
-  contactDamage: 10
-  damageCooldown: 1
 --- !u!65 &6833648554304727159
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -310,8 +311,6 @@ MonoBehaviour:
   health: 3
   possibleDrops: []
   dropChance: 0.3
-  contactDamage: 10
-  damageCooldown: 1
   bulletPrefab: {fileID: 9200986142719990990, guid: ee146f227db50b544acf5095a7b87db3, type: 3}
   firePoint: {fileID: 5590672321190411566}
   fireRate: 1
@@ -356,3 +355,25 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!95 &-5748321282499464299
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7978624443179368204}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 9137fbf9dcb59cc42ae3ce09e38386a0, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
