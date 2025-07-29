@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   powerUpName: Damageboost
   prefab: {fileID: 5315192156743601496, guid: ebe3a2c549f45884abc6f715f714b652, type: 3}
-  dropChance: 0.15
+  dropChance: 1

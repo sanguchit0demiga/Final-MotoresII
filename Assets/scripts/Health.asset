@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   powerUpName: Health Kit
   prefab: {fileID: 7204978441393815372, guid: 2463755947ba88e479301f9ca6188a3d, type: 3}
-  dropChance: 0.2
+  dropChance: 1

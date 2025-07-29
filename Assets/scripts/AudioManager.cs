@@ -47,16 +47,13 @@ public class AudioManager : MonoBehaviour
                 if (sfxGroups.Length > 0)
                 {
                     sfxAudioSource.outputAudioMixerGroup = sfxGroups[0];
-                    Debug.Log("AudioManager: SFX AudioSource conectado al grupo 'SFX' del mixer.");
                 }
                 else
                 {
-                    Debug.LogWarning("AudioManager: No se encontró el grupo 'SFX' en el AudioMixer. Los SFX no serán controlados por el slider.");
                 }
             }
             else
             {
-                Debug.LogError("AudioManager: No hay AudioMixer asignado en el Inspector del AudioManager. Los controles de audio no funcionarán.");
             }
         }
         else
@@ -86,7 +83,6 @@ public class AudioManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Debug.Log($"AudioManager: Escena '{scene.name}' cargada. Verificando configuración de audio.");
 
         // Solo buscar y configurar los Sliders si la escena cargada es una de opciones/menú
         // Los sliders del menú de pausa se inicializan por llamada directa desde PauseManager
@@ -100,7 +96,6 @@ public class AudioManager : MonoBehaviour
             masterSlider = null;
             musicSlider = null;
             sfxSlider = null;
-            Debug.Log($"AudioManager: Escena '{scene.name}' no es de opciones. Referencias de sliders limpiadas.");
         }
 
         // --- SOLUCIÓN PARA MÚSICA FUERTE EN EL NIVEL ---
@@ -109,7 +104,6 @@ public class AudioManager : MonoBehaviour
         if (scene.name == "Level1")
         {
             SetMusicVolume(PlayerPrefs.GetFloat("MusicVol", 1f));
-            Debug.Log("AudioManager: Reaplicando volumen de música al cargar Level1.");
         }
     }
 
@@ -117,7 +111,6 @@ public class AudioManager : MonoBehaviour
     // Este método es público para poder llamarlo desde scripts como PauseManager.
     public void InitializeSliders()
     {
-        Debug.Log("AudioManager: Intentando inicializar sliders de audio...");
 
         // Buscar los GameObjects de los Sliders por su nombre
         // Asegúrate de que estos nombres sean EXACTOS a los de tus Sliders en la jerarquía de Unity
@@ -136,9 +129,7 @@ public class AudioManager : MonoBehaviour
             masterSlider.onValueChanged.RemoveAllListeners(); // Evitar duplicados de listeners
             masterSlider.value = PlayerPrefs.GetFloat("MasterVol", 1f); // Establecer el valor guardado
             masterSlider.onValueChanged.AddListener(SetMasterVolume); // Asignar el listener
-            Debug.Log($"MasterSlider encontrado y configurado. Valor inicial: {masterSlider.value}");
         }
-        else { Debug.LogWarning("MasterSlider GameObject o componente Slider no encontrado en la UI activa."); }
 
         if (musicSlider != null)
         {
@@ -147,7 +138,6 @@ public class AudioManager : MonoBehaviour
             musicSlider.onValueChanged.AddListener(SetMusicVolume);
             Debug.Log($"MusicSlider encontrado y configurado. Valor inicial: {musicSlider.value}");
         }
-        else { Debug.LogWarning("MusicSlider GameObject o componente Slider no encontrado en la UI activa."); }
 
         if (sfxSlider != null)
         {
@@ -156,11 +146,9 @@ public class AudioManager : MonoBehaviour
             sfxSlider.onValueChanged.AddListener(SetSFXVolume);
             Debug.Log($"SFXSlider encontrado y configurado. Valor inicial: {sfxSlider.value}");
         }
-        else { Debug.LogWarning("SFXSlider GameObject o componente Slider no encontrado en la UI activa."); }
 
         if (masterSlider == null && musicSlider == null && sfxSlider == null)
         {
-            Debug.Log("AudioManager: No se encontraron sliders de audio en la UI activa tras buscar.");
         }
     }
 
@@ -171,21 +159,18 @@ public class AudioManager : MonoBehaviour
     {
         mixer.SetFloat("MasterVolume", Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20);
         PlayerPrefs.SetFloat("MasterVol", value);
-        Debug.Log($"Master Volume set to: {value} (mixer: {Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20} dB)");
     }
 
     public void SetMusicVolume(float value)
     {
         mixer.SetFloat("MusicVolume", Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20);
         PlayerPrefs.SetFloat("MusicVol", value);
-        Debug.Log($"Music Volume set to: {value} (mixer: {Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20} dB)");
     }
 
     public void SetSFXVolume(float value)
     {
         mixer.SetFloat("SFXVolume", Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20);
         PlayerPrefs.SetFloat("SFXVol", value);
-        Debug.Log($"SFX Volume set to: {value} (mixer: {Mathf.Log10(Mathf.Clamp(value, 0.001f, 1f)) * 20} dB)");
     }
 
     // --- Métodos de Reproducción de SFX ---
@@ -194,11 +179,9 @@ public class AudioManager : MonoBehaviour
         if (sfxAudioSource != null && hoverSound != null)
         {
             sfxAudioSource.PlayOneShot(hoverSound);
-            Debug.Log($"Playing hover sound: {hoverSound.name}");
         }
         else
         {
-            Debug.LogWarning("Cannot play hover sound: SFX AudioSource not ready or clip is null.");
         }
     }
 
@@ -207,12 +190,8 @@ public class AudioManager : MonoBehaviour
         if (sfxAudioSource != null && clickSound != null)
         {
             sfxAudioSource.PlayOneShot(clickSound);
-            Debug.Log($"Playing click sound: {clickSound.name}");
         }
-        else
-        {
-            Debug.LogWarning("Cannot play click sound: SFX AudioSource not ready or clip is null.");
-        }
+       
     }
 
     // --- NUEVO: Método genérico para reproducir otros SFX (salto, disparo, etc.) ---
@@ -221,11 +200,9 @@ public class AudioManager : MonoBehaviour
         if (sfxAudioSource != null && clipToPlay != null)
         {
             sfxAudioSource.PlayOneShot(clipToPlay);
-            Debug.Log($"Playing SFX: {clipToPlay.name}");
         }
         else
         {
-            Debug.LogWarning($"Cannot play SFX ({clipToPlay?.name ?? "null"}): SFX AudioSource not ready or clip is null.");
         }
     }
 

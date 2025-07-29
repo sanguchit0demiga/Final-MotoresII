@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   powerUpName: Invincibility
   prefab: {fileID: 6139130025224895718, guid: e2cdc535d66624a44bd4f3d887f01163, type: 3}
-  dropChance: 0.15
+  dropChance: 1

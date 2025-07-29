@@ -1,17 +1,18 @@
 using UnityEngine;
-using System; // Necesitas esto para Action
-using UnityEngine.AI; // Necesario si usas NavMeshAgent
+using System; // Ya no es estrictamente necesario para Action aquí si eliminas el evento estático.
+using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
-    // ... (variables existentes como player, deathParticles, detectionRange, moveSpeed, health) ...
     public Transform player;
     public ParticleSystem deathParticles;
     public float detectionRange = 15f;
     public float moveSpeed = 1f;
     public int health = 50;
 
-    public static event Action OnEnemyDied;
+    // ELIMINA ESTA LÍNEA si vas a centralizar el conteo en GameManager
+    // public static event Action OnEnemyDied; // <<-- ¡¡ELIMINA O COMENTA ESTA LÍNEA!!
+
     protected UnityEngine.AI.NavMeshAgent agent;
 
     [Header("Item Drops")]
@@ -21,7 +22,6 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Awake()
     {
-        // ... (Tu código Awake existente) ...
         if (player == null)
         {
             GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
@@ -44,7 +44,6 @@ public class Enemy : MonoBehaviour
 
     protected virtual void Update()
     {
-        // ... (Tu código Update existente) ...
         if (player != null && agent != null && agent.enabled)
         {
             agent.SetDestination(player.position);
@@ -75,26 +74,28 @@ public class Enemy : MonoBehaviour
             Debug.Log($"[Enemy] Partículas de muerte instanciadas para {gameObject.name}.");
         }
 
-        if (OnEnemyDied != null)
+        // --- CAMBIO CRÍTICO AQUÍ ---
+        // En lugar de disparar el evento estático OnEnemyDied,
+        // llama directamente al GameManager Singleton para notificar la muerte.
+        if (GameManager.Instance != null)
         {
-            OnEnemyDied();
-            Debug.Log($"[Enemy] Evento OnEnemyDied disparado para {gameObject.name}.");
+            GameManager.Instance.EnemyDied(); // ¡¡ESTO ES LO QUE NECESITAS!!
+            Debug.Log($"[Enemy] GameManager.Instance notificado sobre la muerte de {gameObject.name}.");
         }
         else
         {
-            Debug.LogWarning($"[Enemy] Evento OnEnemyDied disparado pero no hay suscriptores para {gameObject.name}.");
+            Debug.LogWarning($"[Enemy] GameManager.Instance no encontrado. El conteo de enemigos NO se actualizará para {gameObject.name}.");
         }
+        // --- FIN CAMBIO CRÍTICO ---
 
-        // --- LLAMADA AL MÉTODO DE DROP (con Debug.Log adicional) ---
+
         Debug.Log($"[Enemy] Intentando dropear ítem para {gameObject.name}...");
         DropItem();
-        // --- FIN LLAMADA ---
 
         Destroy(gameObject);
         Debug.Log($"[Enemy] {gameObject.name} GameObject destruido.");
     }
 
-    // --- MÉTODO PARA EL DROP DE ÍTEMS CON Debug.Log DETALLADOS ---
     void DropItem()
     {
         Debug.Log($"[DropItem] Iniciando DropItem() para {gameObject.name}.");
@@ -141,5 +142,4 @@ public class Enemy : MonoBehaviour
             Debug.Log($"[DropItem] Probabilidad de drop fallida ({randomValue:F4} > {dropChance:F4}). No se dropeó ningún ítem para {gameObject.name}.");
         }
     }
-    // --- FIN MÉTODO CON DEBUG.LOGS ---
 }
