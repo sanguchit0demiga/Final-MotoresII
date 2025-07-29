@@ -84,6 +84,7 @@ public class PlayerController : MonoBehaviour
 
     public PowerUpUI powerUpUI; // Referencia al script de la UI de Power-Ups
     private Animator animator;
+    public bool canShoot = false;
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -179,7 +180,7 @@ public class PlayerController : MonoBehaviour
 
         if (!isTopDownMode)
         {
-            // Movimiento en 3D basado en la orientación de la cámara (FPS)
+            // Movimiento en 3D basado en la orientación de la cámara (para FPS)
             move = orientation.forward * input.y + orientation.right * input.x;
         }
         else
@@ -190,21 +191,20 @@ public class PlayerController : MonoBehaviour
             transform.LookAt(lookTarget); // Gira al jugador para que mire hacia el ratón
         }
 
-        // Cálculo de velocidad con dirección (positivo para adelante, negativo para atrás)
-        Vector3 localMove = transform.InverseTransformDirection(move); // Movimiento relativo al jugador
-        float forwardAmount = localMove.z; // Positivo = adelante, negativo = atrás
+        // 💡 Cálculo de velocidad horizontal para animaciones
+        Vector3 horizontalMove = new Vector3(move.x, 0f, move.z);
+        float speed = horizontalMove.magnitude;
 
-        // Animaciones
+        // 🔄 Actualización de parámetros del Animator
         if (animator != null)
         {
-            animator.SetFloat("Speed", Mathf.Abs(forwardAmount)); // Para blend tree
-            animator.SetFloat("Direction", Mathf.Sign(forwardAmount)); // 1 = adelante, -1 = atrás
-            animator.SetBool("IsRunning", Mathf.Abs(forwardAmount) > 0.1f);
+            animator.SetFloat("Speed", speed);
+            animator.SetBool("IsRunning", speed > 0.1f); // true si hay movimiento
         }
 
         move *= moveSpeed;
 
-        // Gravedad y salto
+        // Lógica de gravedad y detección de suelo
         if (controller.isGrounded)
         {
             verticalVelocity = -1f;
@@ -220,7 +220,7 @@ public class PlayerController : MonoBehaviour
             verticalVelocity -= (isWallRunning ? wallRunGravity : gravity) * Time.deltaTime;
         }
 
-        // WallRun
+        // Lógica de WallRun
         isWallRunning = !isTopDownMode && (wallLeft || wallRight) && !controller.isGrounded && Mathf.Abs(input.y) > 0;
         if (isWallRunning)
         {
@@ -298,11 +298,11 @@ public class PlayerController : MonoBehaviour
 
     public void OnFire(InputAction.CallbackContext ctx)
     {
-        // Dispara si el botón se presiona completamente y el cooldown de disparo ha terminado
-        if (ctx.performed && Time.time >= nextFireTime)
+        // ✅ Ahora también comprueba si "canShoot" es verdadero
+        if (canShoot && ctx.performed && Time.time >= nextFireTime)
         {
-            Shoot(); // Llama al método de disparo
-            nextFireTime = Time.time + fireRate; // Reinicia el temporizador de cooldown
+            Shoot();
+            nextFireTime = Time.time + fireRate;
         }
     }
 
@@ -387,8 +387,8 @@ public class PlayerController : MonoBehaviour
             TakeDamage(15f);
         }
     }
-      
-    
+
+
 
     public void TakeDamage(float damageAmount)
     {
