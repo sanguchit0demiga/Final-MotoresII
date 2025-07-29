@@ -1,17 +1,15 @@
-// HealthBarUI.cs
+
 using UnityEngine;
-using UnityEngine.UI; // Necesario para Image
+using UnityEngine.UI; 
 
 public class HealthBarUI : MonoBehaviour
 {
-    public Image healthFillImage; // Arrastra el componente Image que representa el "relleno" de la barra aquí.
-                                  // Asegúrate de que el tipo de Image en el Inspector sea "Filled" (Relleno).
+    public Image healthFillImage; 
 
-    private float maxHealthValue; // Almacenará el valor máximo de salud para calcular el porcentaje.
+    private float maxHealthValue;
 
     void Awake()
     {
-        // Opcional: Intenta encontrar el Image si no se asigna en el Inspector
         if (healthFillImage == null)
         {
             healthFillImage = GetComponent<Image>();
@@ -21,23 +19,21 @@ public class HealthBarUI : MonoBehaviour
             }
         }
     }
-
-    // Inicializa la barra de vida con el valor máximo
     public void SetMaxHealth(float maxHealth)
     {
-        maxHealthValue = maxHealth; // Almacena el valor máximo
+        maxHealthValue = maxHealth; 
         if (healthFillImage != null)
         {
-            healthFillImage.fillAmount = 1f; // Rellena la imagen al máximo al inicio (100%)
+            healthFillImage.fillAmount = 1f; 
         }
     }
 
-    // Actualiza la barra de vida al valor actual
+
     public void SetHealth(float currentHealth)
     {
-        if (healthFillImage != null && maxHealthValue > 0) // Asegúrate de que maxHealthValue no sea cero para evitar división por cero
+        if (healthFillImage != null && maxHealthValue > 0) 
         {
-            // Calcula el porcentaje de salud (0 a 1)
+
             healthFillImage.fillAmount = currentHealth / maxHealthValue;
         }
         else if (maxHealthValue <= 0)

@@ -247,7 +247,7 @@ MonoBehaviour:
   - {fileID: 6139130025224895718, guid: e2cdc535d66624a44bd4f3d887f01163, type: 3}
   - {fileID: 7204978441393815372, guid: 2463755947ba88e479301f9ca6188a3d, type: 3}
   - {fileID: 5315192156743601496, guid: ebe3a2c549f45884abc6f715f714b652, type: 3}
-  dropChance: 0.3
+  dropChance: 0.41
 --- !u!65 &1339135192215860605
 BoxCollider:
   m_ObjectHideFlags: 0

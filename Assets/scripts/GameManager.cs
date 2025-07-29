@@ -1,14 +1,14 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement; // ¡IMPORTANTE! Necesitas esto para cambiar de escena
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     public TextMeshProUGUI enemyCountText;
-    public string winSceneName = "Win"; // Nombre de la escena de victoria (¡asegúrate de que coincida!)
+    public string winSceneName = "Win";
 
     private int _enemiesRemaining;
     public int EnemiesRemaining
@@ -23,15 +23,11 @@ public class GameManager : MonoBehaviour
             if (_enemiesRemaining <= 0)
             {
                 Debug.Log("[GameManager] ¡Todos los enemigos derrotados! Cambiando a la escena de victoria.");
-                LoadWinScene(); // Llama al método para cargar la escena de victoria
-                // Si aún quieres disparar el UnityEvent para otras cosas, puedes mantenerlo,
-                // pero si solo era para la puerta, ya no es necesario para este propósito.
-                // OnAllEnemiesDefeated?.Invoke();
+                LoadWinScene(); 
             }
         }
     }
 
-    // Ya no es estrictamente necesario si solo era para la puerta, pero puedes mantenerlo si lo usas para otras cosas.
     public UnityEvent OnAllEnemiesDefeated;
 
     void Awake()
@@ -81,13 +77,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Nuevo método para cargar la escena de victoria
     private void LoadWinScene()
     {
         if (!string.IsNullOrEmpty("Win"))
         {
-            // Antes de cargar la escena, puedes añadir un pequeño retraso o una pantalla de carga si lo deseas.
-            // Por ahora, cargamos directamente.
             SceneManager.LoadScene("Win");
         }
         else

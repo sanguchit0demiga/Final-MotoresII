@@ -1,5 +1,5 @@
 using UnityEngine;
-using System; // Ya no es estrictamente necesario para Action aquí si eliminas el evento estático.
+using System; 
 using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
@@ -10,8 +10,6 @@ public class Enemy : MonoBehaviour
     public float moveSpeed = 1f;
     public int health = 50;
 
-    // ELIMINA ESTA LÍNEA si vas a centralizar el conteo en GameManager
-    // public static event Action OnEnemyDied; // <<-- ¡¡ELIMINA O COMENTA ESTA LÍNEA!!
 
     protected UnityEngine.AI.NavMeshAgent agent;
 
@@ -74,20 +72,15 @@ public class Enemy : MonoBehaviour
             Debug.Log($"[Enemy] Partículas de muerte instanciadas para {gameObject.name}.");
         }
 
-        // --- CAMBIO CRÍTICO AQUÍ ---
-        // En lugar de disparar el evento estático OnEnemyDied,
-        // llama directamente al GameManager Singleton para notificar la muerte.
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.EnemyDied(); // ¡¡ESTO ES LO QUE NECESITAS!!
+            GameManager.Instance.EnemyDied(); 
             Debug.Log($"[Enemy] GameManager.Instance notificado sobre la muerte de {gameObject.name}.");
         }
         else
         {
             Debug.LogWarning($"[Enemy] GameManager.Instance no encontrado. El conteo de enemigos NO se actualizará para {gameObject.name}.");
         }
-        // --- FIN CAMBIO CRÍTICO ---
-
 
         Debug.Log($"[Enemy] Intentando dropear ítem para {gameObject.name}...");
         DropItem();

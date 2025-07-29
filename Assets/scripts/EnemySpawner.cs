@@ -5,20 +5,15 @@ public class EnemySpawner : MonoBehaviour
     public GameObject enemyPrefab;
     public Transform[] spawnPoints;
     public float spawnRate = 5f;
-    public int numberOfEnemiesToSpawn = 14; // ¡Asegúrate que este valor sea 14 en el Inspector!
+    public int numberOfEnemiesToSpawn = 14; 
 
-    private int enemiesSpawned = 0; // Contador de enemigos generados por ESTE spawner
+    private int enemiesSpawned = 0; 
     private float nextSpawnTime;
-    private bool spawnerActive = false; // Controla si el spawner está activo
-
-    // Ya no necesitas una referencia directa a GameManager aquí si usas el Singleton
-    // private GameManager gameManager; 
+    private bool spawnerActive = false;  
 
     void Awake()
     {
-        // Ya no necesitas FindAnyObjectByType aquí si usas el Singleton
-        // gameManager = FindAnyObjectByType<GameManager>();
-        if (GameManager.Instance == null) // Verifica si el Singleton está disponible
+        if (GameManager.Instance == null) 
         {
             Debug.LogError("[EnemySpawner] No se encontró un GameManager. Asegúrate de que haya uno en la escena y se inicialice primero.");
         }
@@ -33,18 +28,17 @@ public class EnemySpawner : MonoBehaviour
         }
         else if (spawnerActive && enemiesSpawned >= numberOfEnemiesToSpawn)
         {
-            StopSpawner(); // Detiene el spawner una vez que ha generado todos los enemigos
+            StopSpawner();
         }
     }
 
     public void StartSpawner()
     {
-        enemiesSpawned = 0; // Reinicia el contador de este spawner
+        enemiesSpawned = 0; 
         spawnerActive = true;
         nextSpawnTime = Time.time + spawnRate;
         Debug.Log("[EnemySpawner] Spawner activado y listo para generar " + numberOfEnemiesToSpawn + " enemigos.");
 
-        // ¡IMPORTANTE! Notifica al GameManager el número de enemigos que va a generar.
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AddEnemiesFromSpawner(numberOfEnemiesToSpawn);
@@ -69,7 +63,6 @@ public class EnemySpawner : MonoBehaviour
         Transform spawnPoint = spawnPoints[randomIndex];
 
         GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-        // Asegúrate de que el enemigo spawneado tenga la etiqueta "Enemy"
         newEnemy.tag = "Enemy";
 
         enemiesSpawned++;

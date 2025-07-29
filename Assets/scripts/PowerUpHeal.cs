@@ -6,7 +6,7 @@ public class PowerUpHeal : MonoBehaviour
 
     void Awake()
     {
-        // Check for Collider setup on the PowerUpHeal item itself
+       
         Collider ownCollider = GetComponent<Collider>();
         if (ownCollider == null)
         {
@@ -17,7 +17,7 @@ public class PowerUpHeal : MonoBehaviour
             Debug.LogWarning($"[PowerUpHeal] WARNING: Collider on {gameObject.name} is NOT marked as 'Is Trigger'. This might prevent pickup.", this);
         }
 
-        // Check for Rigidbody on the PowerUpHeal item itself
+     
         Rigidbody ownRigidbody = GetComponent<Rigidbody>();
         if (ownRigidbody == null)
         {
@@ -29,12 +29,11 @@ public class PowerUpHeal : MonoBehaviour
     {
         Debug.Log($"[PowerUpHeal] OnTriggerEnter fired! Object: {gameObject.name}, Other object: {other.name}.", this);
 
-        // Check if the entering object has the "Player" tag
         if (other.CompareTag("Player"))
         {
             Debug.Log($"[PowerUpHeal] 'Other' object is tagged as 'Player'. Name: {other.name}.", other.gameObject);
 
-            // Attempt to get the PlayerController component from the player
+        
             PlayerController player = other.GetComponent<PlayerController>();
 
             if (player != null)
@@ -55,9 +54,9 @@ public class PowerUpHeal : MonoBehaviour
         }
     }
 
-    // You might also want a short lifecycle for the pickup
+   
     void Start()
     {
-        Destroy(gameObject, 15f); // Destroy after 15 seconds if not picked up
+        Destroy(gameObject, 15f); 
     }
 }

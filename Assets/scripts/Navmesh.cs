@@ -1,4 +1,4 @@
-// En Navmesh.cs
+
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -26,14 +26,12 @@ public class Navmesh : MonoBehaviour
             }
         }
 
-        // --- NUEVO: Auto-activar seguimiento si la cámara ya está en Top-Down ---
-        // Asumiendo que CamSwitch está en un GameObject en la escena.
+
         CamSwitch camSwitch = FindAnyObjectByType<CamSwitch>();
         if (camSwitch != null && camSwitch.IsTopDownActive())
         {
             StartFollowing();
         }
-        // -----------------------------------------------------------------------
     }
 
     private void Update()

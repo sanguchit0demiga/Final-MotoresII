@@ -15,7 +15,7 @@ public class PowerUpUI : MonoBehaviour
     public void ShowPowerUp(Image overlayImage, GameObject uiObject, float duration)
     {
         uiObject.SetActive(true);
-        overlayImage.fillAmount = 0f; // Comienza vacío
+        overlayImage.fillAmount = 0f; 
         StartCoroutine(FillRadial(overlayImage, duration, uiObject));
     }
 
@@ -24,12 +24,12 @@ public class PowerUpUI : MonoBehaviour
         float time = 0f;
         while (time < duration)
         {
-            overlay.fillAmount = time / duration; // Va de 0 a 1
+            overlay.fillAmount = time / duration; 
             time += Time.deltaTime;
             yield return null;
         }
 
         overlay.fillAmount = 1f;
-        uiObject.SetActive(false); // O dejarlo visible, según prefieras
+        uiObject.SetActive(false); 
     }
 }

@@ -1,22 +1,18 @@
 ﻿using UnityEngine;
-// No necesitas 'System' aquí a menos que uses Action directamente en EnemyShooter,
-// ya que ya lo tienes en la clase base Enemy.
 
-public class EnemyShooter : Enemy // Asegúrate de que hereda de Enemy
+
+public class EnemyShooter : Enemy 
 {
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float fireRate = 1f;
     public float bulletForce = 10f;
     private float nextFireTime = 0f;
+  
 
-    // No necesitas sobrescribir Awake() o Die() a menos que EnemyShooter tenga lógica
-    // adicional específica al inicio o al morir que no esté en Enemy.
-    // Si no los sobrescribes, las versiones de la clase base se usarán.
-
-    protected override void Update() // Usa 'protected override' para sobrescribir el Update de la base
+    protected override void Update() 
     {
-        base.Update(); // Llama al Update de la clase base (para el seguimiento del jugador)
+        base.Update();
 
         if (player == null)
         {
@@ -51,7 +47,6 @@ public class EnemyShooter : Enemy // Asegúrate de que hereda de Enemy
         }
 
         Vector3 targetPlayerPosition = player.position;
-        // targetPlayerPosition.y += 1.0f; // Ajusta la altura si las balas no van al centro del jugador
 
         Vector3 direction = (targetPlayerPosition - firePoint.position).normalized;
         firePoint.rotation = Quaternion.LookRotation(direction);
@@ -72,7 +67,6 @@ public class EnemyShooter : Enemy // Asegúrate de que hereda de Enemy
         Destroy(bullet, 5f);
     }
 
-    // Esto dibuja el rango de detección y la dirección de disparo en la escena
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
@@ -81,7 +75,6 @@ public class EnemyShooter : Enemy // Asegúrate de que hereda de Enemy
         if (player != null && firePoint != null)
         {
             Vector3 targetPlayerPosition = player.position;
-            // targetPlayerPosition.y += 1.0f; // Si ajustas la altura en Shoot(), hazlo también aquí
 
             Vector3 directionToPlayer = (targetPlayerPosition - firePoint.position).normalized;
             Gizmos.color = Color.blue;
