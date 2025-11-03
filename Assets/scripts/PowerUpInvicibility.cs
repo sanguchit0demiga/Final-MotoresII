@@ -1,21 +1,16 @@
-using UnityEngine;
-
-public class PowerUpInvincibility : MonoBehaviour
+public class InvincibilityCommand : ICommand
 {
-    public float duration = 5f;
+    private PlayerController player;
+    private float duration;
 
-    private void OnTriggerEnter(Collider other)
+    public InvincibilityCommand(PlayerController player, float duration)
     {
-        if (other.CompareTag("Player"))
-        {
-            PlayerController player = other.GetComponent<PlayerController>();
-            if (player != null)
-            {
-                Debug.Log("Invincibility power-up collected!");
-                player.ActivateInvincibility(duration);
-                Destroy(gameObject); 
-            }
-        }
+        this.player = player;
+        this.duration = duration;
+    }
+
+    public void Execute()
+    {
+        player.ActivateInvincibility(duration);
     }
 }
-

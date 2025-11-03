@@ -9,17 +9,15 @@ public class Bullet : MonoBehaviour
         damage = dmg;
     }
 
-    public void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Enemy"))
+        if (other.CompareTag("Enemy"))
         {
-            Enemy enemy = other.gameObject.GetComponent<Enemy>();
+            Enemy enemy = other.GetComponent<Enemy>();
             if (enemy != null)
-            {
                 enemy.TakeDamage((int)damage);
-            }
         }
 
-        Destroy(gameObject);
+        ObjectPool.Instance.ReturnBullet(gameObject);
     }
 }

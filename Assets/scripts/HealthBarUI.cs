@@ -1,44 +1,32 @@
-
 using UnityEngine;
-using UnityEngine.UI; 
+using UnityEngine.UI;
 
 public class HealthBarUI : MonoBehaviour
 {
-    public Image healthFillImage; 
+    public Slider slider;
 
-    private float maxHealthValue;
+    private void Start()
+    {
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        if (player != null)
+        {
+            player.OnHealthChanged += UpdateHealthBar;
 
-    void Awake()
-    {
-        if (healthFillImage == null)
-        {
-            healthFillImage = GetComponent<Image>();
-            if (healthFillImage == null)
-            {
-                Debug.LogError("HealthBarUI: No se encontró un componente Image en este GameObject. Asigna uno en el Inspector.");
-            }
-        }
-    }
-    public void SetMaxHealth(float maxHealth)
-    {
-        maxHealthValue = maxHealth; 
-        if (healthFillImage != null)
-        {
-            healthFillImage.fillAmount = 1f; 
+            UpdateHealthBar(player.currentHealth);
         }
     }
 
-
-    public void SetHealth(float currentHealth)
+    private void UpdateHealthBar(float health)
     {
-        if (healthFillImage != null && maxHealthValue > 0) 
-        {
+        slider.value = health;
+    }
 
-            healthFillImage.fillAmount = currentHealth / maxHealthValue;
-        }
-        else if (maxHealthValue <= 0)
+    private void OnDestroy()
+    {
+        PlayerController player = FindFirstObjectByType<PlayerController>();
+        if (player != null)
         {
-            Debug.LogWarning("HealthBarUI: maxHealthValue es cero o negativo. No se puede calcular el fillAmount de la barra de vida.");
+            player.OnHealthChanged -= UpdateHealthBar;
         }
     }
 }

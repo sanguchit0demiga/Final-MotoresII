@@ -6,6 +6,8 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
+    public event System.Action<float> OnHealthChanged;
+
     public float moveSpeed = 6f;
     public float gravity = 20f;
     public float jumpForce = 8f;
@@ -115,8 +117,8 @@ public class PlayerController : MonoBehaviour
         currentHealth = maxHealth; 
         posicionInicial = transform.position; 
         UpdateAmmoDisplay(); 
-        healthBarUI?.SetMaxHealth(maxHealth); 
-        healthBarUI?.SetHealth(currentHealth); 
+        OnHealthChanged?.Invoke(maxHealth); 
+        OnHealthChanged?.Invoke(currentHealth); 
 
 
         if (playerWeapon != null && fpsCameraTransform != null)
@@ -355,10 +357,12 @@ public class PlayerController : MonoBehaviour
 
     public void TakeDamage(float damageAmount)
     {
-        currentHealth -= damageAmount; 
+        currentHealth -= damageAmount;
         currentHealth = Mathf.Max(currentHealth, 0);
-        healthBarUI?.SetHealth(currentHealth); 
-        if (currentHealth <= 0) Die(); 
+
+        OnHealthChanged?.Invoke(currentHealth);
+
+        if (currentHealth <= 0) Die();
     }
 
     public void Die()
@@ -411,8 +415,9 @@ public class PlayerController : MonoBehaviour
 
     public void Heal(float amount)
     {
-        currentHealth = Mathf.Min(currentHealth + amount, maxHealth); 
-        healthBarUI?.SetHealth(currentHealth); 
+        currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+
+        OnHealthChanged?.Invoke(currentHealth);
     }
 
     public void ActivateInvincibility(float duration)
